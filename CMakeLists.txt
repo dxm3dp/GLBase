@@ -11,7 +11,8 @@ set(TARGET_NAME GLBase)
 
 include_directories(
     "${THIRD_PARTY_DIR}/glad/include"
-    "${THIRE_PARTY_DIR}/glfw/include"
+    "${THIRD_PARTY_DIR}/glfw/include"
+    "${SRC_DIR}"
 )
 
 add_executable(${TARGET_NAME}
