@@ -91,7 +91,6 @@ private:
     static void *s_logContext;
     static LogFunc s_logFunc;
     static LogLevel s_minLevel;
-
     static char s_buf[MAX_LOG_LENGTH];
     static std::mutex s_mutex;
 };

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdarg>
+#include <cstring>
 
 #include <iostream>
 #include <fstream>
