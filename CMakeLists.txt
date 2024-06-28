@@ -12,6 +12,7 @@ set(TARGET_NAME GLBase)
 include_directories(
     "${THIRD_PARTY_DIR}/glad/include"
     "${THIRD_PARTY_DIR}/glfw/include"
+    "${THIRD_PARTY_DIR}/glm"
     "${SRC_DIR}"
 )
 
