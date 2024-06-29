@@ -7,8 +7,16 @@
 
 #include "Common/Logger.hpp"
 #include "Model/tgaimage.hpp"
+#include "Render/Vertex.hpp"
 
 BEGIN_NAMESPACE(GLBase)
+
+struct Vertex
+{
+    glm::vec3 position;
+    glm::vec2 uv;
+    glm::vec3 normal;
+};
 
 class Model
 {
@@ -61,7 +69,7 @@ public:
             else if (!line.compare(0, 2, "f "))  // face
             {
                 iss >> trash;
-                std::vector<glm::vec3> f;
+                std::vector<glm::uvec3> f;
                 glm::uvec3 tmp;
                 while (iss >> tmp[0] >> trash >> tmp[1] >> trash >> tmp[2])
                 {
@@ -70,6 +78,7 @@ public:
                         tmp[i]--; // in wavefront obj all indices start at 1, not zero
                     }
                     f.emplace_back(tmp);
+                    m_indices.emplace_back(tmp[0]);
                 }
                 m_faces.emplace_back(f);
             }
@@ -155,11 +164,30 @@ private:
         }
     }
 
+    void initVertexArray()
+    {
+        m_vertexArray.vertexSize = sizeof(Vertex);
+
+        m_vertexArray.attributes.resize(3);
+        m_vertexArray.attributes[0] = {3, sizeof(Vertex), offsetof(Vertex, position)};
+        m_vertexArray.attributes[1] = {2, sizeof(Vertex), offsetof(Vertex, uv)};
+        m_vertexArray.attributes[2] = {3, sizeof(Vertex), offsetof(Vertex, normal)};
+
+        m_vertexArray.vertexBuffer = m_vertices.empty() ? nullptr : (uint8_t *)(&m_vertices[0]);
+        m_vertexArray.vertexBufferLength = m_vertexArray.vertexSize * m_vertices.size();
+
+        m_vertexArray.indexBuffer = m_indices.empty() ? nullptr : &m_indices[0];
+        m_vertexArray.indexBufferLength = sizeof(int32_t) * m_indices.size();
+    }
+
 private:
     std::vector<glm::vec3> m_vertices;
     std::vector<glm::vec2> m_uvs;
     std::vector<glm::vec3> m_normals;
     std::vector<std::vector<glm::uvec3>> m_faces;
+    std::vector<int> m_indices;
+
+    VertexArray m_vertexArray;
 
     TGAImage m_diffuseTex;
     TGAImage m_normalTex;
