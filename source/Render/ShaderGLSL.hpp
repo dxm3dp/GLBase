@@ -72,10 +72,10 @@ public:
         return true;
     }
 
-    bool ShaderGLSL::loadFile(const std::string &path)
+    bool loadFile(const std::string &path)
     {
         std::string source = FileUtils::readText(path);
-        if (source.length() <=0 )
+        if (source.length() <= 0 )
         {
             LOGE("read shader source failed");
             return false;
@@ -84,7 +84,7 @@ public:
         return loadSource(source);
     }
 
-    void ShaderGLSL::destroy()
+    void destroy()
     {
         if (m_id)
         {

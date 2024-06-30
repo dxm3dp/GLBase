@@ -53,7 +53,7 @@ public:
             return false;
         }
 
-        return true;
+        return loadShader(vs, fs);
     }
 
     bool loadFile(const std::string &vsPath, const std::string &fsPath)
