@@ -2,9 +2,15 @@
 
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "Common/Logger.hpp"
+#include "Model/Model.hpp"
 #include "Render/ShaderProgram.hpp"
+#include "Viewer/Camera.hpp"
+
+GLBase::Model *g_model = nullptr;
 
 void processInput(GLFWwindow* window)
 {
@@ -17,9 +23,11 @@ void processInput(GLFWwindow* window)
 const char *VS = R"(
     layout (location = 0) in vec3 aPos;
 
+    uniform mat4 mvp;
+
     void main()
     {
-        gl_Position = vec4(aPos, 1.0);
+        gl_Position = mvp * vec4(aPos, 1.0);
     }
     )";
 
@@ -72,57 +80,53 @@ int main()
         return -1;
     }
 
-    float vertices[] =
-    {
-        // positions | texture coords
-	    0.8f, 0.9f, 0.0f, 1.0f, 1.0f,  // top right
-	    0.8f, -0.7f, 0.0f, 1.0f, 0.0f, // bottom right
-	    -0.8f, 0.9f, 0.0f, 0.0f, 1.0f, // top left
+    g_model = new GLBase::Model("../assets/diablo3/diablo3_pose.obj");
 
-	    -0.8f, 0.8f, 0.0f, 0.0f, 1.0f, // top left
-	    0.8f, -0.8f, 0.0f, 0.0f, 0.0f, // bottom right
-	    -0.8f, -0.8f, 0.0f, 0.0f, 0.0f // bottom left
-    };
-    unsigned int indices[] =
-    {
-        0, 1, 2,    // first triangle
-        3, 4, 5     // second triangle
-    };
+    GLuint vao, vbo, ebo;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-    GLuint VAO, VBO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, g_model->m_vertices.size() * sizeof(glm::vec3), &g_model->m_vertices[0], GL_STATIC_DRAW);
 
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, g_model->m_indices.size() * sizeof(unsigned int), &g_model->m_indices[0], GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void *)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glBindVertexArray(GL_NONE);
+
+    auto camera = std::make_shared<GLBase::Camera>();
+    camera->lookat(glm::vec3(0.f, 0.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
+    camera->setPerspective(glm::radians(60.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+    glm::mat4 mvp = camera->getPerspectiveMatrix() * camera->getViewMatrix();
+
+    glEnable(GL_DEPTH_TEST);
 
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
 
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         program.use();
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        GLint location = glGetUniformLocation(program.getId(), "mvp");
+        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mvp));
+
+        glBindVertexArray(vao);
+        glDrawElements(GL_TRIANGLES, g_model->m_indices.size(), GL_UNSIGNED_INT, nullptr);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
 
     glfwDestroyWindow(window);
     glfwTerminate();

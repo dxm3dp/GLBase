@@ -54,15 +54,17 @@ public:
 
     glm::mat4 getPerspectiveMatrix() const
     {
-        float fax = 1.f / tan(m_fov * 0.5f);
+        float tanHalfFovy = tan(m_fov * 0.5f);
 
         glm::mat4 projectionMatrix(0.f);
 
-        projectionMatrix[0][0] = fax / m_aspect;
-        projectionMatrix[1][1] = fax;
-        projectionMatrix[2][2] = (m_far + m_near) / (m_far - m_near);
-        projectionMatrix[3][2] = 2 * m_far * m_near / (m_far - m_near);
+        projectionMatrix[0][0] = 1.f / (tanHalfFovy * m_aspect);
+        projectionMatrix[1][1] = 1.f / tanHalfFovy;
+        projectionMatrix[2][2] = -(m_far + m_near) / (m_far - m_near);
         projectionMatrix[2][3] = -1.f;
+        projectionMatrix[3][2] = -2 * m_far * m_near / (m_far - m_near);
+
+        return projectionMatrix;
     }
 
     inline float fov() const { return m_fov; }

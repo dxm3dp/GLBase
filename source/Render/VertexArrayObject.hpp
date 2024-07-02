@@ -18,7 +18,7 @@ public:
         if (nullptr == vertexArray.vertexBuffer || nullptr == vertexArray.indexBuffer)
             return;
 
-        m_indicesCount = vertexArray.indexBufferLength / sizeof(int32_t);
+        m_indicesCount = vertexArray.indexBufferLength / sizeof(int);
 
         // vao
         GL_CHECK(glGenVertexArrays(1, &m_vao));

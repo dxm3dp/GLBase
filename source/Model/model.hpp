@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "Common/Logger.hpp"
-#include "Model/tgaimage.hpp"
+#include "Model/TGAImage.hpp"
 #include "Render/Vertex.hpp"
 
 BEGIN_NAMESPACE(GLBase)
@@ -46,7 +46,7 @@ public:
                 }
                 m_vertices.emplace_back(v);
             }
-            else if (!line.compare(0, 3, "vt ")) // texture coord
+            else if (!line.compare(0, 3, "vt ")) // uv
             {
                 iss >> trash >> trash;
                 glm::vec2 vt;
@@ -84,6 +84,7 @@ public:
             }
         }
         LOGI("m_vertices: %d, m_uvs: %d, m_normals: %d, m_faces: %d", m_vertices.size(), m_uvs.size(), m_normals.size(), m_faces.size());
+
         load_texture(filename, "_diffuse.tga", m_diffuseTex);
         load_texture(filename, "_nm_tangent.tga", m_normalTex);
         load_texture(filename, "_spec.tga", m_specularTex);
@@ -124,6 +125,11 @@ public:
     std::vector<glm::uvec3> face(int idx) const
     {
         return m_faces[idx];
+    }
+
+    const VertexArray &vertexArray() const
+    {
+        return m_vertexArray;
     }
 
     TGAColor diffuse(glm::vec2 uv) const
@@ -176,16 +182,16 @@ private:
         m_vertexArray.vertexBuffer = m_vertices.empty() ? nullptr : (uint8_t *)(&m_vertices[0]);
         m_vertexArray.vertexBufferLength = m_vertexArray.vertexSize * m_vertices.size();
 
-        m_vertexArray.indexBuffer = m_indices.empty() ? nullptr : &m_indices[0];
-        m_vertexArray.indexBufferLength = sizeof(int32_t) * m_indices.size();
+        //m_vertexArray.indexBuffer = m_indices.empty() ? nullptr : &m_indices[0];
+        m_vertexArray.indexBufferLength = sizeof(unsigned int) * m_indices.size();
     }
 
-private:
+public:
     std::vector<glm::vec3> m_vertices;
     std::vector<glm::vec2> m_uvs;
     std::vector<glm::vec3> m_normals;
     std::vector<std::vector<glm::uvec3>> m_faces;
-    std::vector<int> m_indices;
+    std::vector<unsigned int> m_indices;
 
     VertexArray m_vertexArray;
 
