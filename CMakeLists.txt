@@ -13,15 +13,32 @@ include_directories(
     "${THIRD_PARTY_DIR}/glad/include"
     "${THIRD_PARTY_DIR}/glfw/include"
     "${THIRD_PARTY_DIR}/glm"
+    "${THIRD_PARTY_DIR}/assimp/include"
     "${SRC_DIR}"
 )
+
+# assimp
+set(BUILD_SHARED_LIBS OFF)
+set(ASSIMP_NO_EXPORT ON)
+set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_INSTALL OFF)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
+set(ASSIMP_BUILD_ZLIB OFF)
+
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT FALSE)
+set(ASSIMP_BUILD_OBJ_IMPORTER TRUE)
+set(ASSIMP_BUILD_GLTF_IMPORTER TRUE)
+
+add_subdirectory(${THIRD_PARTY_DIR}/assimp)
 
 add_executable(${TARGET_NAME}
     "${SRC_DIR}/main.cpp"
     "${THIRD_PARTY_DIR}/glad/src/glad.c"
 )
 
-set(LINK_LIBS
+set(LINK_LIBS assimp)
+
+set(LINK_LIBS ${LINK_LIBS}
     "${THIRD_PARTY_DIR}/glfw/lib-mingw-w64/libglfw3.a"
     "${THIRD_PARTY_DIR}/glfw/lib-mingw-w64/libglfw3dll.a"
 )
