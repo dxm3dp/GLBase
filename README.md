@@ -14,4 +14,8 @@
 
 教程
 
-- [LearnOpenGL](https://learnopengl.com/)
+- `LearnOpenGL` [https://learnopengl.com/](https://learnopengl.com/)
+
+项目
+
+- `SoftGLRender` [https://github.com/keith2018/SoftGLRender](https://github.com/keith2018/SoftGLRender)

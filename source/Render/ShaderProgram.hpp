@@ -25,6 +25,7 @@ public:
         destroy();
     }
 
+public:
     void addDefine(const std::string &def)
     {
         if (def.empty())

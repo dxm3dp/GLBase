@@ -21,28 +21,6 @@ void processInput(GLFWwindow* window)
     }
 }
 
-const char *VS = R"(
-    layout (location = 0) in vec3 aPos;
-
-    uniform mat4 mvp;
-
-    void main()
-    {
-        gl_Position = mvp * vec4(aPos, 1.0);
-    }
-    )";
-
-
-const char* FS = R"(
-
-    out vec4 FragColor;
-
-    void main()
-    {
-        FragColor = vec4(1.0, 0.5, 0.2, 1.0);
-    }
-    )";
-
 int main()
 {
     if (!glfwInit())
@@ -74,7 +52,7 @@ int main()
     }
 
     GLBase::ShaderProgram program;
-    if (!program.loadSource(VS, FS))
+    if (!program.loadFile("../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag"))
     {
         LOGE("Failed to initialize shader");
         glfwTerminate();
@@ -98,7 +76,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program.use();
-        GLint location = glGetUniformLocation(program.getId(), "mvp");
+        GLint location = glGetUniformLocation(program.getId(), "u_mvp");
         glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mvp));
 
         g_asModel->draw();
