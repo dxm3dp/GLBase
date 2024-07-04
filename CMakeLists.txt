@@ -14,6 +14,7 @@ include_directories(
     "${THIRD_PARTY_DIR}/glfw/include"
     "${THIRD_PARTY_DIR}/glm"
     "${THIRD_PARTY_DIR}/assimp/include"
+    "${THIRD_PARTY_DIR}/stb/include"
     "${SRC_DIR}"
 )
 

@@ -9,6 +9,7 @@
 - `assimp` [https://github.com/assimp/assimp](https://github.com/assimp/assimp)
 - `glfw` [https://github.com/glfw/glfw](https://github.com/glfw/glfw)
 - `glm` [https://github.com/g-truc/glm](https://github.com/g-truc/glm)
+- `stb_image.h` [https://github.com/nothings/stb](https://github.com/nothings/stb)
 
 ## 参考
 
