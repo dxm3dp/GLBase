@@ -10,6 +10,7 @@
 
 #include "Common/Logger.hpp"
 #include "Model/AsModel.hpp"
+#include "Model/Cube.hpp"
 #include "Render/ShaderProgram.hpp"
 #include "Viewer/Camera.hpp"
 
@@ -53,6 +54,7 @@ int main()
         return -1;
     }
 
+    g_asModel = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
     GLBase::ShaderProgram program;
     if (!program.loadFile("../source/Shader/GLSL/BasicPhong.vert", "../source/Shader/GLSL/BasicPhong.frag"))
     {
@@ -61,7 +63,14 @@ int main()
         return -1;
     }
 
-    g_asModel = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
+    GLBase::Cube *lightCube = new GLBase::Cube(glm::vec3(-0.8f, 0.5f, 1.f), glm::vec3(0.1f, 0.1f, 0.1f));
+    GLBase::ShaderProgram programLightCube;
+    if (!programLightCube.loadFile("../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag"))
+    {
+        LOGE("Failed to initialize shader");
+        glfwTerminate();
+        return -1;
+    }
 
     auto camera = std::make_shared<GLBase::Camera>();
     camera->lookat(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
@@ -78,10 +87,10 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program.use();
-        GLint location = glGetUniformLocation(program.getId(), "u_mvp");
-        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mvp));
-
+        program.setMat4("u_mvp", mvp);
+        program.setVec3("lightColor", 0.5f, 1.f, 1.f);
         g_asModel->draw(program);
+        lightCube->draw(programLightCube);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

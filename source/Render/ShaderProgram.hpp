@@ -111,6 +111,31 @@ public:
         return m_id;
     }
 
+    void setBool(const std::string &name, bool value) const
+    {
+        glUniform1i(glGetUniformLocation(m_id, name.c_str()), (int)value);
+    }
+
+    void setInt(const std::string &name, int value) const
+    {
+        glUniform1i(glGetUniformLocation(m_id, name.c_str()), value);
+    }
+
+    void setFloat(const std::string &name, float value) const
+    {
+        glUniform1f(glGetUniformLocation(m_id, name.c_str()), value);
+    }
+
+    void setVec3(const std::string &name, float v0, float v1, float v2) const
+    {
+        glUniform3f(glGetUniformLocation(m_id, name.c_str()), v0, v1, v2);
+    }
+
+    void setMat4(const std::string &name, const glm::mat4 &mat) const
+    {
+        glUniformMatrix4fv(glGetUniformLocation(m_id, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
+    }
+
 private:
     bool loadShader(ShaderGLSL &vs, ShaderGLSL &fs)
     {
