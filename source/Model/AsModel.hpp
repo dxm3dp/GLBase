@@ -25,15 +25,17 @@ public:
             return;
         }
 
+        m_directory = filename.substr(0, filename.find_last_of('/'));
+
         processNode(scene->mRootNode, scene);
     }
 
 public:
-    void draw()
+    void draw(ShaderProgram &shader)
     {
         for(int i = 0; i < m_meshes.size(); i++)
         {
-            m_meshes[i].draw();
+            m_meshes[i].draw(shader);
         }
     }
 
@@ -55,6 +57,7 @@ private:
     {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
+        std::vector<Texture> textures;
 
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
@@ -93,11 +96,85 @@ private:
             }
         }
 
-        return Mesh(vertices, indices);
+        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        std::vector<Texture> diffuseTex = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+        textures.insert(textures.end(), diffuseTex.begin(), diffuseTex.end());
+
+        return Mesh(vertices, indices, textures);
+    }
+
+    std::vector<Texture> loadMaterialTextures(aiMaterial *material, aiTextureType type, std::string typeName)
+    {
+        std::vector<Texture> textures;
+        unsigned int texCount = material->GetTextureCount(type);
+        for(unsigned int i = 0; i < texCount; i++)
+        {
+            aiString str;
+            material->GetTexture(type, i, &str);
+
+            bool skip = false;
+            for(int j = 0; j < m_textures.size(); j++)
+            {
+                if (std::strcmp(m_textures[j].path.data(), str.C_Str()) == 0)
+                {
+                    textures.push_back(m_textures[j]);
+                    skip = true;
+                    break;
+                }
+            }
+            if (!skip)
+            {
+                Texture texture;
+                texture.type = typeName;
+                texture.path = str.C_Str();
+                std::string path = m_directory + '/' + str.C_Str();
+                glGenTextures(1, &texture.id);
+
+                int width, height, nrComponents;
+                unsigned char *image = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
+                if (image != nullptr)
+                {
+                    GLenum format;
+                    if (nrComponents == 1)
+                    {
+                        format = GL_RED;
+                    }
+                    else if (nrComponents == 3)
+                    {
+                        format = GL_RGB;
+                    }
+                    else if (nrComponents == 4)
+                    {
+                        format = GL_RGBA;
+                    }
+
+                    glBindTexture(GL_TEXTURE_2D, texture.id);
+                    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+                    stbi_image_free(image);
+                }
+                else
+                {
+                    LOGE("Failed to load texture at path : %s", path.c_str());
+                    stbi_image_free(image);
+                }
+
+                textures.push_back(texture);
+                m_textures.push_back(texture);
+            }
+        }
+
+        return textures;
     }
 
 private:
     std::vector<Mesh> m_meshes;
+    std::vector<Texture> m_textures;
+    std::string m_directory;
 };
 
 END_NAMESPACE(GLBase)

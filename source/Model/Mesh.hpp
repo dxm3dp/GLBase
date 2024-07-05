@@ -6,6 +6,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include "Render/ShaderProgram.hpp"
+
 BEGIN_NAMESPACE(GLBase)
 
 struct Vertex
@@ -15,23 +17,55 @@ struct Vertex
     glm::vec3 normal;
 };
 
+struct Texture
+{
+    unsigned int id;
+    std::string type;
+    std::string path;
+};
+
 class Mesh
 {
 public:
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices)// TODO 引用类型？
+    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)// TODO 引用类型？
     {
         m_vertices = vertices;
         m_indices = indices;
+        m_textures = textures;
 
         setupMesh();
     }
 
 public:
-    void draw()
+    void draw(ShaderProgram &shader)
     {
+        unsigned int diffuseNr = 1;
+        unsigned int normalNr = 1;
+        unsigned int specularNr = 1;
+        std::string name;
+        for(int i = 0; i < m_textures.size(); i++)
+        {
+            if (m_textures[i].type == "texture_diffuse")
+            {
+                name = "texture_diffuse" + std::to_string(diffuseNr++);
+            }
+            else if (m_textures[i].type == "texture_normal")
+            {
+                name = "texture_normal" + std::to_string(normalNr++);
+            }
+            else if (m_textures[i].type == "texture_specular")
+            {
+                name = "texture_specular" + std::to_string(specularNr++);
+            }
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+            glUniform1i(glGetUniformLocation(shader.getId(), name.c_str()), i);
+        }
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE0);
     }
 
 private:
@@ -61,6 +95,7 @@ private:
 private:
     std::vector<Vertex> m_vertices;
     std::vector<unsigned int> m_indices;
+    std::vector<Texture> m_textures;
 
     unsigned int VAO, VBO, EBO;
 };
