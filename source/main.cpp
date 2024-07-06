@@ -99,6 +99,8 @@ int main()
         program.setVec3("lightColor", 1.f, 1.f, 1.f);
         program.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
         program.setVec3("viewPos", camera->eye().x, camera->eye().y, camera->eye().z);
+        program.setVec3("material.ambient", 0.1f, 0.1f, 0.1f);
+        program.setFloat("material.shininess", 64.f);
         g_asModel->draw(program);
         lightCube->draw(programLightCube);
 

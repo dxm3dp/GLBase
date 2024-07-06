@@ -99,6 +99,8 @@ private:
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
         std::vector<Texture> diffuseTex = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseTex.begin(), diffuseTex.end());
+        std::vector<Texture> specularTex = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+        textures.insert(textures.end(), specularTex.begin(), specularTex.end());
 
         return Mesh(vertices, indices, textures);
     }
