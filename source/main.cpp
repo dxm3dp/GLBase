@@ -56,14 +56,15 @@ int main()
 
     g_asModel = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
     GLBase::ShaderProgram program;
-    if (!program.loadFile("../source/Shader/GLSL/BasicPhong.vert", "../source/Shader/GLSL/BasicPhong.frag"))
+    if (!program.loadFile("../source/Shader/GLSL/PhongGLSL.vert", "../source/Shader/GLSL/PhongGLSL.frag"))
     {
         LOGE("Failed to initialize shader");
         glfwTerminate();
         return -1;
     }
 
-    GLBase::Cube *lightCube = new GLBase::Cube(glm::vec3(-0.8f, 0.5f, 1.f), glm::vec3(0.1f, 0.1f, 0.1f));
+    glm::vec3 lightPos = glm::vec3(-0.8f, 0.5f, 1.f);
+    GLBase::Cube *lightCube = new GLBase::Cube(lightPos, glm::vec3(0.1f, 0.1f, 0.1f));
     GLBase::ShaderProgram programLightCube;
     if (!programLightCube.loadFile("../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag"))
     {
@@ -73,9 +74,14 @@ int main()
     }
 
     auto camera = std::make_shared<GLBase::Camera>();
-    camera->lookat(glm::vec3(0.f, 0.f, 3.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f));
+    glm::vec3 cameraPos = glm::vec3(0.f, 0.f, 3.f);
+    glm::vec3 cameraCenter = glm::vec3(0.f, 0.f, 0.f);
+    glm::vec3 cameraUp = glm::vec3(0.f, 1.f, 0.f);
+    camera->lookat(cameraPos, cameraCenter, cameraUp);
     camera->setPerspective(glm::radians(60.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-    glm::mat4 mvp = camera->getPerspectiveMatrix() * camera->getViewMatrix() * glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+
+    glm::mat4 modelMatrix = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
+    glm::mat4 mvp = camera->getPerspectiveMatrix() * camera->getViewMatrix() * modelMatrix;
 
     glEnable(GL_DEPTH_TEST);
 
@@ -88,7 +94,11 @@ int main()
 
         program.use();
         program.setMat4("u_mvp", mvp);
-        program.setVec3("lightColor", 0.5f, 1.f, 1.f);
+        program.setMat4("u_model", modelMatrix);
+        program.setMat3("u_inversTransModel", glm::mat3(glm::transpose(glm::inverse(modelMatrix))));
+        program.setVec3("lightColor", 1.f, 1.f, 1.f);
+        program.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
+        program.setVec3("viewPos", camera->eye().x, camera->eye().y, camera->eye().z);
         g_asModel->draw(program);
         lightCube->draw(programLightCube);
 

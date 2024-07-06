@@ -62,7 +62,7 @@ public:
             GLint maxLength = 0;
             GL_CHECK(glGetShaderiv(m_id, GL_INFO_LOG_LENGTH, &maxLength));
             std::vector<GLchar> infoLog(maxLength);
-            GL_CHECK((m_id, maxLength, &maxLength, &infoLog[0]));
+            GL_CHECK(glGetShaderInfoLog(m_id, maxLength, &maxLength, &infoLog[0]));
             LOGE("compile shader failed: %s", &infoLog[0]);
 
             destroy();
