@@ -7,14 +7,28 @@
 
 BEGIN_NAMESPACE(GLBase)
 
+enum CameraMovement
+{
+    FORWARD,
+    BACKWARD,
+    LEFT,
+    RIGHT
+};
+
+const float SPEED = 2.f;
+const float SENSITIVITY = 0.1f;
+const float PITCH = 0.f;
+const float YAW = -90.f;
+
 class Camera
 {
 public:
-    void lookat(const glm::vec3 &eye, const glm::vec3 &center, const glm::vec3 &up)
+    Camera(glm::vec3 position, glm::vec3 target, glm::vec3 up)
+        : m_position(position), m_front(target - position), m_up(up)
     {
-        m_eye = eye;
-        m_center = center;
-        m_up = up;
+        m_right = glm::normalize(glm::cross(m_up, m_front));
+        m_pitch = PITCH;
+        m_yaw = YAW;
     }
 
     void setPerspective(float fov, float aspect, float near, float far)
@@ -27,7 +41,7 @@ public:
 
     glm::mat4 getViewMatrix() const
     {
-        glm::vec3 z = glm::normalize(m_eye - m_center);
+        glm::vec3 z = glm::normalize(-m_front);
         glm::vec3 x = glm::normalize(glm::cross(m_up, z));
         glm::vec3 y = glm::normalize(glm::cross(z, x));
 
@@ -45,9 +59,9 @@ public:
         viewMatrix[1][2] = z.y;
         viewMatrix[2][2] = z.z;
 
-        viewMatrix[3][0] = -glm::dot(x, m_eye);
-        viewMatrix[3][1] = -glm::dot(y, m_eye);
-        viewMatrix[3][2] = -glm::dot(z, m_eye);
+        viewMatrix[3][0] = -glm::dot(x, m_position);
+        viewMatrix[3][1] = -glm::dot(y, m_position);
+        viewMatrix[3][2] = -glm::dot(z, m_position);
 
         return viewMatrix;
     }
@@ -72,18 +86,62 @@ public:
     inline float near() const { return m_near; }
     inline float far() const { return m_far; }
 
-    inline const glm::vec3 &eye() const { return m_eye; }
-    inline const glm::vec3 &center() const { return m_center; }
+    inline const glm::vec3 &position() const { return m_position; }
     inline const glm::vec3 &up() const { return m_up; }
+
+    void movement(CameraMovement moveDir, float deltaTime)
+    {
+        float speed = SPEED * deltaTime;
+        if (moveDir == FORWARD)
+        {
+            m_position += m_front * speed;
+        }
+        if (moveDir == BACKWARD)
+        {
+            m_position -= m_front * speed;
+        }
+        if (moveDir == LEFT)
+        {
+            m_position += m_right * speed;
+        }
+        if (moveDir == RIGHT)
+        {
+            m_position -= m_right * speed;
+        }
+    }
+
+    void lookAround(float xoffset, float yoffset)
+    {
+        xoffset *= SENSITIVITY;
+        yoffset *= SENSITIVITY;
+
+        m_pitch += yoffset;
+        m_yaw += xoffset;
+
+        if (m_pitch > 89.f)
+            m_pitch = 89.f;
+        if (m_pitch < -89.f)
+            m_pitch = -89.f;
+
+        glm::vec3 front;
+        front.x = glm::cos(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
+        front.y = glm::sin(glm::radians(m_pitch));
+        front.z = glm::sin(glm::radians(m_yaw)) * glm::cos(glm::radians(m_pitch));
+        m_front = glm::normalize(front);
+        m_right = glm::normalize(glm::cross(m_up, m_front));
+    }
 
 private:
     float m_fov = glm::radians(60.0f);
     float m_aspect = 1.f;
     float m_near = 0.01f;
     float m_far = 100.f;
-    glm::vec3 m_eye{};
-    glm::vec3 m_center{};
+    glm::vec3 m_position{};
     glm::vec3 m_up{};
+    glm::vec3 m_front{};
+    glm::vec3 m_right{};
+    float m_pitch;
+    float m_yaw;
 };
 
 END_NAMESPACE(GLBase)

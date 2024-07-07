@@ -33,14 +33,19 @@ public:
     }
 
 public:
-    void draw(ShaderProgram &shader)
+    void draw(ShaderProgram &shader, glm::mat4 &mvp)
     {
         shader.use();
-        glUniformMatrix4fv(glGetUniformLocation(shader.getId(), "u_mvp"), 1, GL_FALSE, glm::value_ptr(m_model));
+        glUniformMatrix4fv(glGetUniformLocation(shader.getId(), "u_mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
+    }
+
+    glm::mat4 getModelMatrix() const
+    {
+        return m_model;
     }
 
 private:
