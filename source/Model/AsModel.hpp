@@ -20,7 +20,7 @@ public:
     AsModel(const std::string &filename)
     {
         Assimp::Importer importer;
-        aiScene const *scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs);
+        aiScene const *scene = importer.ReadFile(filename, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {
             LOGE("Assimp error: %s", importer.GetErrorString());
@@ -86,6 +86,16 @@ private:
             {
                 vertex.normal = glm::vec3(0.f, 0.f, 0.f);
             }
+            if (mesh->HasTangentsAndBitangents())
+            {
+                vertex.tangent.x = mesh->mTangents[i].x;
+                vertex.tangent.y = mesh->mTangents[i].y;
+                vertex.tangent.z = mesh->mTangents[i].z;
+            }
+            else
+            {
+                vertex.tangent = glm::vec3(0.f, 0.f, 0.f);
+            }
             vertices.push_back(vertex);
         }
 
@@ -103,6 +113,8 @@ private:
         textures.insert(textures.end(), diffuseTex.begin(), diffuseTex.end());
         std::vector<Texture> specularTex = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularTex.begin(), specularTex.end());
+        std::vector<Texture> normalTex = loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal");
+        textures.insert(textures.end(), normalTex.begin(), normalTex.end());
 
         return Mesh(vertices, indices, textures);
     }

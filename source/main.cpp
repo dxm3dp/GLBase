@@ -117,7 +117,7 @@ int main()
 
     g_asModel = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
     GLBase::ShaderProgram program;
-    if (!program.loadFile("../source/Shader/GLSL/PhongGLSL.vert", "../source/Shader/GLSL/PhongGLSL.frag"))
+    if (!program.loadFile("../source/Shader/GLSL/PhongTangentNormal.vert", "../source/Shader/GLSL/PhongTangentNormal.frag"))
     {
         LOGE("Failed to initialize shader");
         glfwTerminate();
@@ -152,10 +152,9 @@ int main()
         program.use();
         program.setMat4("u_mvp", mvp);
         program.setMat4("u_model", modelMatrix);
-        program.setMat3("u_inversTransModel", glm::mat3(glm::transpose(glm::inverse(modelMatrix))));
+        program.setVec3("u_lightPos", lightPos.x, lightPos.y, lightPos.z);
+        program.setVec3("u_viewPos", g_camera->position().x, g_camera->position().y, g_camera->position().z);
         program.setVec3("lightColor", 1.f, 1.f, 1.f);
-        program.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
-        program.setVec3("viewPos", g_camera->position().x, g_camera->position().y, g_camera->position().z);
         program.setVec3("material.ambient", 0.1f, 0.1f, 0.1f);
         program.setFloat("material.shininess", 64.f);
         g_asModel->draw(program);
