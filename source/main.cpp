@@ -21,6 +21,9 @@ std::shared_ptr<GLBase::Camera> g_camera = nullptr;
 glm::vec3 g_cameraPos = glm::vec3(0.f, 0.f, 3.f);
 glm::vec3 g_cameraFront = glm::vec3(0.f, 0.f, -1.f);
 glm::vec3 g_cameraUp = glm::vec3(0.f, 1.f, 0.f);
+
+glm::vec3 g_lightPos = glm::vec3(-0.8f, 0.5f, 1.f);
+
 float g_lastX;
 float g_lastY;
 bool g_firstMouse;
@@ -117,7 +120,7 @@ int main()
 
     g_asModel = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
     GLBase::ShaderProgram program;
-    if (!program.loadFile("../source/Shader/GLSL/PhongTangentNormal.vert", "../source/Shader/GLSL/PhongTangentNormal.frag"))
+    if (!program.loadFile("../source/Shader/GLSL/BlinnPhong.vert", "../source/Shader/GLSL/BlinnPhong.frag"))
     {
         LOGE("Failed to initialize shader");
         glfwTerminate();
@@ -125,8 +128,7 @@ int main()
     }
     glm::mat4 modelMatrix = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
 
-    glm::vec3 lightPos = glm::vec3(-0.8f, 0.5f, 1.f);
-    GLBase::Cube *lightCube = new GLBase::Cube(lightPos, glm::vec3(0.1f, 0.1f, 0.1f));
+    GLBase::Cube *lightCube = new GLBase::Cube(g_lightPos, glm::vec3(0.1f, 0.1f, 0.1f));
     GLBase::ShaderProgram programLightCube;
     if (!programLightCube.loadFile("../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag"))
     {
@@ -134,6 +136,7 @@ int main()
         glfwTerminate();
         return -1;
     }
+    glm::mat4 lightCubeModelMatrix = lightCube->getModelMatrix();
 
     g_camera = std::make_shared<GLBase::Camera>(g_cameraPos, g_cameraPos + g_cameraFront, g_cameraUp);
     g_camera->setPerspective(glm::radians(60.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
@@ -147,19 +150,18 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * modelMatrix;
-
         program.use();
-        program.setMat4("u_mvp", mvp);
-        program.setMat4("u_model", modelMatrix);
-        program.setVec3("u_lightPos", lightPos.x, lightPos.y, lightPos.z);
+        program.setMat4("u_modelMat", modelMatrix);
+        program.setMat4("u_viewMat", g_camera->getViewMatrix());
+        program.setMat4("u_projectionMat", g_camera->getPerspectiveMatrix());
+        program.setVec3("u_lightPos", g_lightPos.x, g_lightPos.y, g_lightPos.z);
         program.setVec3("u_viewPos", g_camera->position().x, g_camera->position().y, g_camera->position().z);
-        program.setVec3("lightColor", 1.f, 1.f, 1.f);
-        program.setVec3("material.ambient", 0.1f, 0.1f, 0.1f);
-        program.setFloat("material.shininess", 64.f);
+        program.setVec3("u_lightColor", 1.f, 1.f, 1.f);
+        program.setVec3("u_material.ambient", 0.1f, 0.1f, 0.1f);
+        program.setFloat("u_material.shininess", 64.f);
         g_asModel->draw(program);
 
-        mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * lightCube->getModelMatrix();
+        glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * lightCubeModelMatrix;
         lightCube->draw(programLightCube, mvp);
 
         glfwSwapBuffers(window);
