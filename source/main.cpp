@@ -9,6 +9,7 @@
 #include "Common/Logger.hpp"
 #include "Model/AsModel.hpp"
 #include "Model/Cube.hpp"
+#include "Model/Floor.hpp"
 #include "Render/ShaderProgram.hpp"
 #include "Viewer/Camera.hpp"
 
@@ -150,6 +151,8 @@ int main()
     g_camera = std::make_shared<GLBase::Camera>(g_cameraPos, g_cameraPos + g_cameraFront, g_cameraUp);
     g_camera->setPerspective(glm::radians(60.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
 
+    GLBase::Floor *floor = new GLBase::Floor(glm::vec3(0.f, -1.f, 0.f), glm::vec3(2.f, 1.f, 2.f));
+
     glEnable(GL_DEPTH_TEST);
 
     while (!glfwWindowShouldClose(window))
@@ -197,6 +200,9 @@ int main()
 
         mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * lightCube2->getModelMatrix();
         lightCube2->draw(programLightCube, mvp);
+
+        mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * floor->getModelMatrix();
+        floor->draw(programLightCube, mvp);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
