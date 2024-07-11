@@ -4,6 +4,24 @@
 
 项目中使用的模型是 [tinyrender](https://github.com/ssloy/tinyrenderer) 里面的开源模型。
 
+## 构建
+
+```bash
+git clone https://github.com/dxm3dp/GLBase.git
+cd GLBase
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+## 运行
+
+```bash
+cd GLBase/build
+./GLBase.exe
+```
+
 ## Third Party Libraries
 
 - `assimp` [https://github.com/assimp/assimp](https://github.com/assimp/assimp)
