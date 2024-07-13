@@ -25,6 +25,11 @@ glm::vec3 g_cameraFront = glm::vec3(0.f, 0.f, -1.f);
 glm::vec3 g_cameraUp = glm::vec3(0.f, 1.f, 0.f);
 
 glm::vec3 g_lightPos = glm::vec3(-0.8f, 0.5f, 1.f);
+glm::vec3 g_pointLightPositions[] =
+{
+    glm::vec3( 0.7f,  0.2f,  2.0f),
+    glm::vec3( -1.0f, 0.3f, -4.0f)
+};
 
 float g_lastX;
 float g_lastY;
@@ -88,6 +93,10 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
     g_camera->lookAround(xoffset, yoffset);
 }
 
+void drawAsModel(GLBase::AsModel *asModel, GLBase::ShaderProgram &program, glm::mat4 &modelMatrix);
+void drawCube(GLBase::Cube *cube, GLBase::ShaderProgram &program);
+void drawFloor(GLBase::Floor *floor, GLBase::ShaderProgram &program);
+
 int main()
 {
     if (!glfwInit())
@@ -133,13 +142,8 @@ int main()
     glm::mat4 modelMatrix2 = glm::translate(modelMatrix1, glm::vec3(-3.f, -4.f, -1.f));
     modelMatrix2 = glm::rotate(modelMatrix2, glm::radians(-45.f), glm::vec3(0.f, 0.f, 1.f));
 
-    glm::vec3 pointLightPositions[] =
-    {
-        glm::vec3( 0.7f,  0.2f,  2.0f),
-        glm::vec3( -1.0f, 0.3f, -4.0f)
-    };
-    GLBase::Cube *lightCube1 = new GLBase::Cube(pointLightPositions[0], glm::vec3(0.05f, 0.05f, 0.05f));
-    GLBase::Cube *lightCube2 = new GLBase::Cube(pointLightPositions[1], glm::vec3(0.05f, 0.05f, 0.05f));
+    GLBase::Cube *lightCube1 = new GLBase::Cube(g_pointLightPositions[0], glm::vec3(0.05f, 0.05f, 0.05f));
+    GLBase::Cube *lightCube2 = new GLBase::Cube(g_pointLightPositions[1], glm::vec3(0.05f, 0.05f, 0.05f));
     GLBase::ShaderProgram programLightCube;
     if (!programLightCube.loadFile("../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag"))
     {
@@ -153,56 +157,20 @@ int main()
 
     GLBase::Floor *floor = new GLBase::Floor(glm::vec3(0.f, -1.f, 0.f), glm::vec3(2.f, 1.f, 2.f));
 
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
 
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        program.use();
-        program.setMat4("u_modelMat", modelMatrix1);
-        program.setMat4("u_viewMat", g_camera->getViewMatrix());
-        program.setMat4("u_projectionMat", g_camera->getPerspectiveMatrix());
-        program.setVec3("u_viewPos", g_camera->position().x, g_camera->position().y, g_camera->position().z);
-        program.setVec3("u_dirLight.direction", -1.f, -1.f, -1.f);
-        program.setVec3("u_dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        program.setVec3("u_dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-        program.setVec3("u_dirLight.specular", 0.5f, 0.5f, 0.5f);
-        program.setVec3("u_material.ambient", 0.1f, 0.1f, 0.1f);
-        program.setFloat("u_material.shininess", 64.f);
-        // point light 1
-        program.setVec3("u_pointLight[0].position", pointLightPositions[0].x, pointLightPositions[0].y, pointLightPositions[0].z);
-        program.setVec3("u_pointLight[0].ambient", 0.05f, 0.05f, 0.05f);
-        program.setVec3("u_pointLight[0].diffuse", 0.8f, 0.8f, 0.8f);
-        program.setVec3("u_pointLight[0].specular", 1.0f, 1.0f, 1.0f);
-        program.setFloat("u_pointLight[0].constant", 1.0f);
-        program.setFloat("u_pointLight[0].linear", 0.09f);
-        program.setFloat("u_pointLight[0].quadratic", 0.032f);
-        // point light 2
-        program.setVec3("u_pointLight[1].position", pointLightPositions[1].x, pointLightPositions[1].y, pointLightPositions[1].z);
-        program.setVec3("u_pointLight[1].ambient", 0.05f, 0.05f, 0.05f);
-        program.setVec3("u_pointLight[1].diffuse", 0.8f, 0.8f, 0.8f);
-        program.setVec3("u_pointLight[1].specular", 1.0f, 1.0f, 1.0f);
-        program.setFloat("u_pointLight[1].constant", 1.0f);
-        program.setFloat("u_pointLight[1].linear", 0.09f);
-        program.setFloat("u_pointLight[1].quadratic", 0.032f);
-
-        g_asModel->draw(program);
-
-        program.setMat4("u_modelMat", modelMatrix2);
-        g_asModel2->draw(program);
-
-        glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * lightCube1->getModelMatrix();
-        lightCube1->draw(programLightCube, mvp);
-
-        mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * lightCube2->getModelMatrix();
-        lightCube2->draw(programLightCube, mvp);
-
-        mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * floor->getModelMatrix();
-        floor->draw(programLightCube, mvp);
+        drawAsModel(g_asModel, program, modelMatrix1);
+        drawAsModel(g_asModel2, program, modelMatrix2);
+        drawCube(lightCube1, programLightCube);
+        drawCube(lightCube2, programLightCube);
+        drawFloor(floor, programLightCube);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -212,4 +180,54 @@ int main()
     glfwTerminate();
 
     return 0;
+}
+
+void drawAsModel(GLBase::AsModel *asModel, GLBase::ShaderProgram &program, glm::mat4 &modelMatrix)
+{
+    program.use();
+    // set model view projection matrix
+    program.setMat4("u_modelMat", modelMatrix);
+    program.setMat4("u_viewMat", g_camera->getViewMatrix());
+    program.setMat4("u_projectionMat", g_camera->getPerspectiveMatrix());
+    // set view position
+    program.setVec3("u_viewPos", g_camera->position().x, g_camera->position().y, g_camera->position().z);
+    // set directional light
+    program.setVec3("u_dirLight.direction", -1.f, -1.f, -1.f);
+    program.setVec3("u_dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    program.setVec3("u_dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+    program.setVec3("u_dirLight.specular", 0.5f, 0.5f, 0.5f);
+    program.setVec3("u_material.ambient", 0.1f, 0.1f, 0.1f);
+    program.setFloat("u_material.shininess", 64.f);
+    // set point light 1
+    program.setVec3("u_pointLight[0].position", g_pointLightPositions[0].x, g_pointLightPositions[0].y, g_pointLightPositions[0].z);
+    program.setVec3("u_pointLight[0].ambient", 0.05f, 0.05f, 0.05f);
+    program.setVec3("u_pointLight[0].diffuse", 0.8f, 0.8f, 0.8f);
+    program.setVec3("u_pointLight[0].specular", 1.0f, 1.0f, 1.0f);
+    program.setFloat("u_pointLight[0].constant", 1.0f);
+    program.setFloat("u_pointLight[0].linear", 0.09f);
+    program.setFloat("u_pointLight[0].quadratic", 0.032f);
+    // set point light 2
+    program.setVec3("u_pointLight[1].position", g_pointLightPositions[1].x, g_pointLightPositions[1].y, g_pointLightPositions[1].z);
+    program.setVec3("u_pointLight[1].ambient", 0.05f, 0.05f, 0.05f);
+    program.setVec3("u_pointLight[1].diffuse", 0.8f, 0.8f, 0.8f);
+    program.setVec3("u_pointLight[1].specular", 1.0f, 1.0f, 1.0f);
+    program.setFloat("u_pointLight[1].constant", 1.0f);
+    program.setFloat("u_pointLight[1].linear", 0.09f);
+    program.setFloat("u_pointLight[1].quadratic", 0.032f);
+
+    g_asModel->draw(program);
+}
+
+void drawCube(GLBase::Cube *cube, GLBase::ShaderProgram &program)
+{
+    glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * cube->getModelMatrix();
+
+    cube->draw(program, mvp);
+}
+
+void drawFloor(GLBase::Floor *floor, GLBase::ShaderProgram &program)
+{
+    glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * floor->getModelMatrix();
+
+    floor->draw(program, mvp);
 }
