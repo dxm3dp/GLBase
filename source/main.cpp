@@ -17,7 +17,6 @@ const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 
 GLBase::AsModel *g_asModel = nullptr;
-GLBase::AsModel *g_asModel2 = nullptr;
 
 std::shared_ptr<GLBase::Camera> g_camera = nullptr;
 glm::vec3 g_cameraPos = glm::vec3(0.f, 0.f, 3.f);
@@ -93,9 +92,11 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
     g_camera->lookAround(xoffset, yoffset);
 }
 
-void drawAsModel(GLBase::AsModel *asModel, GLBase::ShaderProgram &program, glm::mat4 &modelMatrix);
+void setBlinnPhongShaderProgram(GLBase::ShaderProgram &program, glm::mat4 &modelMatrix);
+void drawAsModel(GLBase::ShaderProgram &program);
 void drawCube(GLBase::Cube *cube, GLBase::ShaderProgram &program);
 void drawFloor(GLBase::Floor *floor, GLBase::ShaderProgram &program);
+void loadShader(GLBase::ShaderProgram &program, const std::string &vsPath, const std::string &fsPath);
 
 int main()
 {
@@ -130,32 +131,26 @@ int main()
     }
 
     g_asModel = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
-    g_asModel2 = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
-    GLBase::ShaderProgram program;
-    if (!program.loadFile("../source/Shader/GLSL/BlinnPhongMultiLights.vert", "../source/Shader/GLSL/BlinnPhongMultiLights.frag"))
-    {
-        LOGE("Failed to initialize shader");
-        glfwTerminate();
-        return -1;
-    }
+
     glm::mat4 modelMatrix1 = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
     glm::mat4 modelMatrix2 = glm::translate(modelMatrix1, glm::vec3(-3.f, -4.f, -1.f));
     modelMatrix2 = glm::rotate(modelMatrix2, glm::radians(-45.f), glm::vec3(0.f, 0.f, 1.f));
 
     GLBase::Cube *lightCube1 = new GLBase::Cube(g_pointLightPositions[0], glm::vec3(0.05f, 0.05f, 0.05f));
     GLBase::Cube *lightCube2 = new GLBase::Cube(g_pointLightPositions[1], glm::vec3(0.05f, 0.05f, 0.05f));
+    GLBase::Floor *floor = new GLBase::Floor(glm::vec3(0.f, -1.f, 0.f), glm::vec3(2.f, 1.f, 2.f));
+
+    GLBase::ShaderProgram program;
+    loadShader(program, "../source/Shader/GLSL/BlinnPhongMultiLights.vert", "../source/Shader/GLSL/BlinnPhongMultiLights.frag");
+
     GLBase::ShaderProgram programLightCube;
-    if (!programLightCube.loadFile("../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag"))
-    {
-        LOGE("Failed to initialize shader");
-        glfwTerminate();
-        return -1;
-    }
+    loadShader(programLightCube, "../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag");
+
+    GLBase::ShaderProgram programShadowMapping;
+    loadShader(programShadowMapping, "../source/Shader/GLSL/BlinnPhongShadowMapping.vert", "../source/Shader/GLSL/BlinnPhongShadowMapping.frag");
 
     g_camera = std::make_shared<GLBase::Camera>(g_cameraPos, g_cameraPos + g_cameraFront, g_cameraUp);
     g_camera->setPerspective(glm::radians(60.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
-
-    GLBase::Floor *floor = new GLBase::Floor(glm::vec3(0.f, -1.f, 0.f), glm::vec3(2.f, 1.f, 2.f));
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -166,8 +161,12 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawAsModel(g_asModel, program, modelMatrix1);
-        drawAsModel(g_asModel2, program, modelMatrix2);
+        setBlinnPhongShaderProgram(program, modelMatrix1);
+        drawAsModel(program);
+
+        setBlinnPhongShaderProgram(program, modelMatrix2);
+        drawAsModel(program);
+
         drawCube(lightCube1, programLightCube);
         drawCube(lightCube2, programLightCube);
         drawFloor(floor, programLightCube);
@@ -182,7 +181,7 @@ int main()
     return 0;
 }
 
-void drawAsModel(GLBase::AsModel *asModel, GLBase::ShaderProgram &program, glm::mat4 &modelMatrix)
+void setBlinnPhongShaderProgram(GLBase::ShaderProgram &program, glm::mat4 &modelMatrix)
 {
     program.use();
     // set model view projection matrix
@@ -214,7 +213,10 @@ void drawAsModel(GLBase::AsModel *asModel, GLBase::ShaderProgram &program, glm::
     program.setFloat("u_pointLight[1].constant", 1.0f);
     program.setFloat("u_pointLight[1].linear", 0.09f);
     program.setFloat("u_pointLight[1].quadratic", 0.032f);
+}
 
+void drawAsModel(GLBase::ShaderProgram &program)
+{
     g_asModel->draw(program);
 }
 
@@ -230,4 +232,13 @@ void drawFloor(GLBase::Floor *floor, GLBase::ShaderProgram &program)
     glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * floor->getModelMatrix();
 
     floor->draw(program, mvp);
+}
+
+void loadShader(GLBase::ShaderProgram &program, const std::string &vsPath, const std::string &fsPath)
+{
+    if (!program.loadFile(vsPath, fsPath))
+    {
+        LOGE("Failed to initialize shader");
+        glfwTerminate();
+    }
 }
