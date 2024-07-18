@@ -13,14 +13,14 @@ BEGIN_NAMESPACE(GLBase)
 
 constexpr char const * OpenGL_GLSL_VERSION = "#version 430 core\n";
 
-class ShaderGLSL
+class GLSLUtils
 {
 public:
-    explicit ShaderGLSL(GLenum type) : m_type(type)
+    explicit GLSLUtils(GLenum type) : m_type(type)
     {
         m_header = OpenGL_GLSL_VERSION;
     }
-    ~ShaderGLSL() { }
+    ~GLSLUtils() { }
 
     void setHeader(const std::string &header)
     {
@@ -46,7 +46,7 @@ public:
         }
         if (shaderStr.empty())
         {
-            LOGE("ShaderGLSL::loadSource failed: empty source");
+            LOGE("GLSLUtils::loadSource failed: empty source");
             return false;
         }
 

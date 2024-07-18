@@ -7,7 +7,7 @@ BEGIN_NAMESPACE(GLBase)
 
 struct VertexAttributeDesc
 {
-    size_t size;
+    size_t size; // number of components
     size_t stride;
     size_t offset;
 };
