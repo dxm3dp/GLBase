@@ -5,6 +5,8 @@
 
 #include <glad/glad.h>
 
+#include "Common/Buffer.hpp"
+
 BEGIN_NAMESPACE(GLBase)
 
 enum class TextureType

@@ -6,19 +6,12 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
-#include "Render/ShaderProgram.hpp"
+#include "Render/ModelBase.hpp"
+#include "Render/ProgramGLSL.hpp"
 
 BEGIN_NAMESPACE(GLBase)
 
-struct Vertex
-{
-    glm::vec3 position;
-    glm::vec2 texCoords;
-    glm::vec3 normal;
-    glm::vec3 tangent;
-};
-
-struct Texture
+struct Textures
 {
     unsigned int id;
     std::string type;
@@ -28,7 +21,7 @@ struct Texture
 class Mesh
 {
 public:
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)// TODO 引用类型？
+    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Textures> textures)
     {
         m_vertices = vertices;
         m_indices = indices;
@@ -38,7 +31,7 @@ public:
     }
 
 public:
-    void draw(ShaderProgram &shader)
+    void draw(ProgramGLSL &shader)
     {
         unsigned int diffuseNr = 1;
         unsigned int normalNr = 1;
@@ -67,6 +60,13 @@ public:
         glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
         glActiveTexture(GL_TEXTURE0);
+    }
+
+    void draw()
+    {
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
     }
 
 private:
@@ -98,7 +98,7 @@ private:
 private:
     std::vector<Vertex> m_vertices;
     std::vector<unsigned int> m_indices;
-    std::vector<Texture> m_textures;
+    std::vector<Textures> m_textures;
 
     unsigned int VAO, VBO, EBO;
 };
