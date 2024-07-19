@@ -39,7 +39,7 @@ public:
     {
         if (ptr != nullptr)
         {
-            free(*((void **)(ptr - 1)));
+            free(((void **)ptr)[-1]);
         }
     }
 
