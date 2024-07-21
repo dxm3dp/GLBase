@@ -6,7 +6,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
-#include "Render/ModelBase.hpp"
+#include "Model/ModelBase.hpp"
 #include "Render/ProgramGLSL.hpp"
 
 BEGIN_NAMESPACE(GLBase)

@@ -60,6 +60,16 @@ public:
         }
     }
 
+    inline size_t getWidth() const
+    {
+        return m_width;
+    }
+
+    inline size_t getHeight() const
+    {
+        return m_height;
+    }
+
 protected:
     size_t m_width = 0;
     size_t m_height = 0;

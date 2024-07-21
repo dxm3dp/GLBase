@@ -3,12 +3,14 @@
 
 #include "Common/cpplang.hpp"
 
-#include "Render/ModelBase.hpp"
+#include "Model/Model.hpp"
+#include "Model/ModelBase.hpp"
 
 BEGIN_NAMESPACE(GLBase)
 
 struct DemoScene
 {
+    std::shared_ptr<Model> model = nullptr;
     ModelMesh floor;
 };
 

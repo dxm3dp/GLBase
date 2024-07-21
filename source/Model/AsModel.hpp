@@ -6,11 +6,11 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
 
+#include "Common/ImageUtils.hpp"
 #include "Common/Logger.hpp"
 #include "Model/Mesh.hpp"
+#include "Model/ModelLoader.hpp"
 
 BEGIN_NAMESPACE(GLBase)
 
@@ -33,11 +33,19 @@ public:
     }
 
 public:
-    void draw(ShaderProgram &shader)
+    void draw(ProgramGLSL &shader)
     {
         for(int i = 0; i < m_meshes.size(); i++)
         {
             m_meshes[i].draw(shader);
+        }
+    }
+
+    void draw()
+    {
+        for(int i = 0; i < m_meshes.size(); i++)
+        {
+            m_meshes[i].draw();
         }
     }
 
@@ -59,7 +67,7 @@ private:
     {
         std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
-        std::vector<Texture> textures;
+        std::vector<Textures> textures;
 
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
@@ -109,19 +117,19 @@ private:
         }
 
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        std::vector<Texture> diffuseTex = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+        std::vector<Textures> diffuseTex = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseTex.begin(), diffuseTex.end());
-        std::vector<Texture> specularTex = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+        std::vector<Textures> specularTex = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularTex.begin(), specularTex.end());
-        std::vector<Texture> normalTex = loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal");
+        std::vector<Textures> normalTex = loadMaterialTextures(material, aiTextureType_NORMALS, "texture_normal");
         textures.insert(textures.end(), normalTex.begin(), normalTex.end());
 
         return Mesh(vertices, indices, textures);
     }
 
-    std::vector<Texture> loadMaterialTextures(aiMaterial *material, aiTextureType type, std::string typeName)
+    std::vector<Textures> loadMaterialTextures(aiMaterial *material, aiTextureType type, std::string typeName)
     {
-        std::vector<Texture> textures;
+        std::vector<Textures> textures;
         unsigned int texCount = material->GetTextureCount(type);
         for(unsigned int i = 0; i < texCount; i++)
         {
@@ -140,7 +148,7 @@ private:
             }
             if (!skip)
             {
-                Texture texture;
+                Textures texture;
                 texture.type = typeName;
                 texture.path = str.C_Str();
                 std::string path = m_directory + '/' + str.C_Str();
@@ -148,6 +156,7 @@ private:
 
                 int width, height, nrComponents;
                 unsigned char *image = stbi_load(path.c_str(), &width, &height, &nrComponents, 0);
+
                 if (image != nullptr)
                 {
                     GLenum format;
@@ -189,7 +198,7 @@ private:
 
 private:
     std::vector<Mesh> m_meshes;
-    std::vector<Texture> m_textures;
+    std::vector<Textures> m_textures;
     std::string m_directory;
 };
 
