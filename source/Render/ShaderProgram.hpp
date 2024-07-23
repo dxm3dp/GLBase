@@ -7,7 +7,8 @@
 
 #include "Common/FileUtils.hpp"
 #include "Render/ProgramGLSL.hpp"
-#include "Render/UniformBlock.hpp"
+#include "Render/ShaderResources.hpp"
+#include "Render/UniformBase.hpp"
 
 BEGIN_NAMESPACE(GLBase)
 
@@ -17,6 +18,19 @@ public:
     int getId() const
     {
         return (int)m_programId;
+    }
+
+    void bindResources(ShaderResources &resources)
+    {
+        for (auto &kv : resources.blocks)
+        {
+            bindUniform(*kv.second, false);
+        }
+
+        for (auto &kv : resources.samplers)
+        {
+            bindUniform(*kv.second, true);
+        }
     }
 
     bool compileAndLinkFile(const std::string &vsPath, const std::string &fsPath)
@@ -39,24 +53,14 @@ public:
         m_uniformSamplerBinding = 0;
     }
 
-    int getUniformBlockBinding()
-    {
-        return m_uniformBlockBinding++;
-    }
-
-    int getUniformSamplerBinding()
-    {
-        return m_uniformSamplerBinding++;
-    }
-
 private:
-    bool bindUniform(UniformBlock &uniformBlock)
+    bool bindUniform(UniformBase &uniform, bool isSampler)
     {
-        int hash = uniformBlock.getHash();
+        int hash = uniform.getHash();
         int location = -1;
         if (m_uniformLocations.find(hash) == m_uniformLocations.end())
         {
-            location = uniformBlock.getLocation(*this);
+            location = uniform.getLocation(m_programId);
             m_uniformLocations[hash] = location;
         }
         else
@@ -67,9 +71,20 @@ private:
         if (location < 0)
             return false;
 
-        uniformBlock.bindProgram(*this, location);
+        int binding = isSampler ? getUniformSamplerBinding() : getUniformBlockBinding();
+        uniform.bindProgram(m_programId, binding, location);
 
         return true;
+    }
+
+    int getUniformBlockBinding()
+    {
+        return m_uniformBlockBinding++;
+    }
+
+    int getUniformSamplerBinding()
+    {
+        return m_uniformSamplerBinding++;
     }
 
 private:

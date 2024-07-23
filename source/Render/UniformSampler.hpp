@@ -13,23 +13,22 @@ BEGIN_NAMESPACE(GLBase)
 
 #define BIND_TEX_OPENGL(n) case n: glActiveTexture(GL_TEXTURE##n); break;
 
-class UniformSampler : UniformBase
+class UniformSampler : public UniformBase
 {
 public:
     explicit UniformSampler(const std::string &name, TextureType type, TextureFormat format) : UniformBase(name), m_texType(type), m_texFormat(format) {}
 
 public:
-    int getLocation(ShaderProgram &program) override
+    int getLocation(int programId) override
     {
-        return glGetUniformLocation(program.getId(), name.c_str());
+        return glGetUniformLocation(programId, name.c_str());
     }
 
-    void bindProgram(ShaderProgram &program, int location) override
+    void bindProgram(int programId, int binding, int location) override
     {
         if (location < 0)
             return;
 
-        int binding = program.getUniformSamplerBinding();
         switch (binding)
         {
             BIND_TEX_OPENGL(0)

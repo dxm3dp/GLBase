@@ -11,7 +11,7 @@
 
 BEGIN_NAMESPACE(GLBase)
 
-class UniformBlock : UniformBase
+class UniformBlock : public UniformBase
 {
 public:
     UniformBlock(const std::string &name, int size) : UniformBase(name), m_blockSize(size)
@@ -27,18 +27,17 @@ public:
     }
 
 public:
-    int getLocation(ShaderProgram &program) override
+    int getLocation(int programId) override
     {
-        return glGetUniformBlockIndex(program.getId(), name.c_str());
+        return glGetUniformBlockIndex(programId, name.c_str());
     }
 
-    void bindProgram(ShaderProgram &program, int location)
+    void bindProgram(int programId, int binding, int location) override
     {
         if (location < 0)
             return;
 
-        int binding = program.getUniformBlockBinding();
-        glUniformBlockBinding(program.getId(), location, binding);
+        glUniformBlockBinding(programId, location, binding);
         glBindBufferBase(GL_UNIFORM_BUFFER, binding, m_ubo);
     }
 

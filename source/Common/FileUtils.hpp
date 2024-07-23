@@ -1,4 +1,4 @@
-#ifndef _FILE_UTILS_HPP
+#ifndef _FILE_UTILS_HPP_
 #define _FILE_UTILS_HPP_
 
 #include "Common/cpplang.hpp"

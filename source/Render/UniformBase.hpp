@@ -4,7 +4,6 @@
 #include "Common/cpplang.hpp"
 
 #include "Common/UUID.hpp"
-#include "Render/ShaderProgram.hpp"
 
 BEGIN_NAMESPACE(GLBase)
 
@@ -19,8 +18,8 @@ public:
         return m_uuid.get();
     }
 
-    virtual int getLocation(ShaderProgram &program) = 0;
-    virtual void bindProgram(ShaderProgram &program, int location) = 0;
+    virtual int getLocation(int programId) = 0;
+    virtual void bindProgram(int programId, int binding, int location) = 0;
 
 public:
     std::string name;
