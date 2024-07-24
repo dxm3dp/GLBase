@@ -5,7 +5,7 @@
 
 BEGIN_NAMESPACE(GLBase)
 
-const std::string SHADER_GLSL_DIR = "../source/Shaders/GLSL/";
+const std::string SHADER_GLSL_DIR = "../source/Shader/GLSL/";
 
 END_NAMESPACE(GLBase)
 
