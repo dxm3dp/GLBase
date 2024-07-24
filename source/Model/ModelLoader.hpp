@@ -19,7 +19,10 @@ BEGIN_NAMESPACE(GLBase)
 class ModelLoader
 {
 public:
-    explicit ModelLoader() {}
+    explicit ModelLoader()
+    {
+        loadFloor();
+    }
 
 public:
     void loadFloor()
@@ -37,8 +40,24 @@ public:
         m_scene.floor.indices.push_back(2);
 
         m_scene.floor.material = std::make_shared<Material>();
-        m_scene.floor.material->shadingModel = ShadingModel::BaseColor;
+        m_scene.floor.material->shadingModel = ShadingModel::BlinnPhong;
         m_scene.floor.material->baseColor = glm::vec4(1.0f);
+
+        std::string texturePath = "../assets/Textures/wood.png";
+        auto buffer = loadTextureFile(texturePath);
+        if (buffer)
+        {
+            auto &texData = m_scene.floor.material->textureData[MaterialTexType::ALBEDO];
+            texData.tag = texturePath;
+            texData.width = buffer->getWidth();
+            texData.height = buffer->getHeight();
+            texData.data = {buffer};
+        }
+        else
+        {
+            LOGE("ModelLoader::loadFloor loadTextureFile failed: %s, path: %s", Material::materialTexTypeStr(MaterialTexType::ALBEDO), texturePath.c_str());
+        }
+
         m_scene.floor.InitVertexArray();
     }
 
@@ -328,6 +347,11 @@ public:
 				LOGE("load texture failed: %s, path: %s", Material::materialTexTypeStr(texType), absolutePath.c_str());
 			}
         }
+    }
+
+    DemoScene& getScene()
+    {
+        return m_scene;
     }
 
 private:

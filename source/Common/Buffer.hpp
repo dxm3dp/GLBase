@@ -70,6 +70,11 @@ public:
         return m_height;
     }
 
+    inline T *getRawDataPtr() const
+    {
+        return m_data.get();
+    }
+
 protected:
     size_t m_width = 0;
     size_t m_height = 0;

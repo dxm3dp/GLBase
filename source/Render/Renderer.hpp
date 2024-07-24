@@ -7,6 +7,7 @@
 #include "Config/Config.hpp"
 #include "Model/ModelBase.hpp"
 #include "Render/ShaderProgram.hpp"
+#include "Render/Texture2D.hpp"
 #include "Render/UniformBlock.hpp"
 #include "Render/UniformSampler.hpp"
 #include "Viewer/Camera.hpp"
@@ -69,8 +70,10 @@ private:
     void setupMaterial(ModelBase &model, ShadingModel shadingModel, const std::set<int> &uniformBlocks)
     {
         auto &material = *model.material;
-
-        // set texture
+        if (material.textures.empty())
+        {
+            setupTextures(material);
+        }
 
         if (nullptr == material.materialObj)
         {
@@ -107,6 +110,40 @@ private:
         }
     }
 
+    void setupTextures(Material &material)
+    {
+        for(auto &kv : material.textureData)
+        {
+            TextureDesc texDesc{};
+            texDesc.width = kv.second.width;
+            texDesc.height = kv.second.height;
+            texDesc.format = TextureFormat::RGBA8;
+            texDesc.usage = (int)TextureUsage::Sampler | (int)TextureUsage::UploadData;
+            texDesc.useMipmaps = true;
+            texDesc.multiSample = false;
+
+            SamplerDesc sampler{};
+            sampler.wrapS = kv.second.wrapModeU;
+            sampler.wrapT = kv.second.wrapModeV;
+            sampler.filterMin = FilterMode::LINEAR_MIPMAP_LINEAR;
+            sampler.filterMag = FilterMode::LINEAR_MIPMAP_LINEAR;
+
+            std::shared_ptr<Texture> texture = nullptr;
+            switch(kv.first)
+            {
+                default:
+                    texDesc.type = TextureType::Texture2D;
+                    sampler.filterMin = FilterMode::LINEAR_MIPMAP_LINEAR;
+                    break;
+            }
+            texture = createTexture(texDesc);
+            texture->setSamplerDesc(sampler);
+            texture->setImageData(kv.second.data);
+            texture->tag = kv.second.tag;
+            material.textures[kv.first] = texture;
+        }
+    }
+
     bool setupShaderProgram(Material &material, ShadingModel shadingModel)
     {
         size_t cacheKey = getShaderProgramCacheKey(shadingModel);
@@ -140,13 +177,26 @@ private:
         for (auto &kv : material.textures)
         {
             const char *samplerName = Material::samplerName((MaterialTexType) kv.first);
-            if (samplerName)
+            if (samplerName != nullptr)
             {
                 auto uniform = createUniformSampler(samplerName, *kv.second);
                 uniform->setTexture(kv.second);
                 material.materialObj->shaderResources->samplers[kv.first] = std::move(uniform);
             }
         }
+    }
+
+    std::shared_ptr<Texture> createTexture(const TextureDesc &desc)
+    {
+        switch(desc.type)
+        {
+            case TextureType::Texture2D:
+                return std::make_shared<Texture2D>(desc);
+            default:
+                break;
+        }
+
+        return nullptr;
     }
 
     std::shared_ptr<ShaderProgram> createShaderProgram()
@@ -164,7 +214,7 @@ private:
         switch (shadingModel)
         {
             CASE_CREATE_SHADER_GL(ShadingModel::BaseColor, BasicGLSL);
-            CASE_CREATE_SHADER_GL(ShadingModel::BlinnPhong, BlinnPhong);
+            CASE_CREATE_SHADER_GL(ShadingModel::BlinnPhong, BasicGLSL);
             default:
                 break;
         }

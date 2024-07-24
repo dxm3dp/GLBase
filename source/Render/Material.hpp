@@ -19,7 +19,10 @@ struct TextureData
     std::string tag;
     size_t width = 0;
     size_t height = 0;
-    std::shared_ptr<Buffer<RGBA>> data = nullptr;
+    std::vector<std::shared_ptr<Buffer<RGBA>>> data;
+    WrapMode wrapModeU = WrapMode::REPEAT;
+    WrapMode wrapModeV = WrapMode::REPEAT;
+    WrapMode wrapModeW = WrapMode::REPEAT;
 };
 
 enum class ShadingModel
