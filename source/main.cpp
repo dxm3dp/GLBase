@@ -10,25 +10,30 @@
 #include "Model/AsModel.hpp"
 #include "Model/Cube.hpp"
 #include "Model/Floor.hpp"
-#include "Render/ShaderProgram.hpp"
+#include "Model/ModelLoader.hpp"
+#include "Render/ShadowMapping.hpp"
+#include "Render/ProgramGLSL.hpp"
+#include "Render/Renderer.hpp"
 #include "Viewer/Camera.hpp"
 
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 1024;
+const int SCREEN_HEIGHT = 1024;
 
 GLBase::AsModel *g_asModel = nullptr;
 
-std::shared_ptr<GLBase::Camera> g_camera = nullptr;
-glm::vec3 g_cameraPos = glm::vec3(0.f, 0.f, 3.f);
-glm::vec3 g_cameraFront = glm::vec3(0.f, 0.f, -1.f);
-glm::vec3 g_cameraUp = glm::vec3(0.f, 1.f, 0.f);
+glm::vec3 g_floorPos = glm::vec3(0.0f, -1.0f, 0.0f);
 
-glm::vec3 g_lightPos = glm::vec3(-0.8f, 0.5f, 1.f);
+glm::vec3 g_lightPos = glm::vec3(1.0f, 4.0f, 1.0f);
 glm::vec3 g_pointLightPositions[] =
 {
     glm::vec3( 0.7f,  0.2f,  2.0f),
     glm::vec3( -1.0f, 0.3f, -4.0f)
 };
+
+std::shared_ptr<GLBase::Camera> g_camera = nullptr;
+glm::vec3 g_cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 g_cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 g_cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float g_lastX;
 float g_lastY;
@@ -92,12 +97,6 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
     g_camera->lookAround(xoffset, yoffset);
 }
 
-void setBlinnPhongShaderProgram(GLBase::ShaderProgram &program, glm::mat4 &modelMatrix);
-void drawAsModel(GLBase::ShaderProgram &program);
-void drawCube(GLBase::Cube *cube, GLBase::ShaderProgram &program);
-void drawFloor(GLBase::Floor *floor, GLBase::ShaderProgram &program);
-void loadShader(GLBase::ShaderProgram &program, const std::string &vsPath, const std::string &fsPath);
-
 int main()
 {
     if (!glfwInit())
@@ -130,27 +129,17 @@ int main()
         return -1;
     }
 
-    g_asModel = new GLBase::AsModel("../assets/DamagedHelmet/DamagedHelmet.gltf");
-
-    glm::mat4 modelMatrix1 = glm::rotate(glm::mat4(1.f), glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-    glm::mat4 modelMatrix2 = glm::translate(modelMatrix1, glm::vec3(-3.f, -4.f, -1.f));
-    modelMatrix2 = glm::rotate(modelMatrix2, glm::radians(-45.f), glm::vec3(0.f, 0.f, 1.f));
-
-    GLBase::Cube *lightCube1 = new GLBase::Cube(g_pointLightPositions[0], glm::vec3(0.05f, 0.05f, 0.05f));
-    GLBase::Cube *lightCube2 = new GLBase::Cube(g_pointLightPositions[1], glm::vec3(0.05f, 0.05f, 0.05f));
-    GLBase::Floor *floor = new GLBase::Floor(glm::vec3(0.f, -1.f, 0.f), glm::vec3(2.f, 1.f, 2.f));
-
-    GLBase::ShaderProgram program;
-    loadShader(program, "../source/Shader/GLSL/BlinnPhongMultiLights.vert", "../source/Shader/GLSL/BlinnPhongMultiLights.frag");
-
-    GLBase::ShaderProgram programLightCube;
-    loadShader(programLightCube, "../source/Shader/GLSL/MiniGLSL.vert", "../source/Shader/GLSL/MiniGLSL.frag");
-
-    GLBase::ShaderProgram programShadowMapping;
-    loadShader(programShadowMapping, "../source/Shader/GLSL/BlinnPhongShadowMapping.vert", "../source/Shader/GLSL/BlinnPhongShadowMapping.frag");
-
     g_camera = std::make_shared<GLBase::Camera>(g_cameraPos, g_cameraPos + g_cameraFront, g_cameraUp);
     g_camera->setPerspective(glm::radians(60.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+
+    GLBase::ShadowMapping shadowMapping;
+
+    GLBase::ModelLoader modelLoader;
+    modelLoader.loadFloor(modelLoader.getScene().floor);
+    modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f)));
+
+    GLBase::Renderer renderer;
+    renderer.create(g_camera);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -161,15 +150,11 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        setBlinnPhongShaderProgram(program, modelMatrix1);
-        drawAsModel(program);
+        renderer.pipelineSetup(modelLoader.getScene().floor, GLBase::ShadingModel::BlinnPhong, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
+        renderer.pipelineSetup(modelLoader.getScene().cube, GLBase::ShadingModel::BlinnPhong, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
 
-        setBlinnPhongShaderProgram(program, modelMatrix2);
-        drawAsModel(program);
-
-        drawCube(lightCube1, programLightCube);
-        drawCube(lightCube2, programLightCube);
-        drawFloor(floor, programLightCube);
+        renderer.pipelineDraw(modelLoader.getScene().floor);
+        renderer.pipelineDraw(modelLoader.getScene().cube);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -181,60 +166,7 @@ int main()
     return 0;
 }
 
-void setBlinnPhongShaderProgram(GLBase::ShaderProgram &program, glm::mat4 &modelMatrix)
-{
-    program.use();
-    // set model view projection matrix
-    program.setMat4("u_modelMat", modelMatrix);
-    program.setMat4("u_viewMat", g_camera->getViewMatrix());
-    program.setMat4("u_projectionMat", g_camera->getPerspectiveMatrix());
-    // set view position
-    program.setVec3("u_viewPos", g_camera->position().x, g_camera->position().y, g_camera->position().z);
-    // set directional light
-    program.setVec3("u_dirLight.direction", -1.f, -1.f, -1.f);
-    program.setVec3("u_dirLight.ambient", 0.05f, 0.05f, 0.05f);
-    program.setVec3("u_dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-    program.setVec3("u_dirLight.specular", 0.5f, 0.5f, 0.5f);
-    program.setVec3("u_material.ambient", 0.1f, 0.1f, 0.1f);
-    program.setFloat("u_material.shininess", 64.f);
-    // set point light 1
-    program.setVec3("u_pointLight[0].position", g_pointLightPositions[0].x, g_pointLightPositions[0].y, g_pointLightPositions[0].z);
-    program.setVec3("u_pointLight[0].ambient", 0.05f, 0.05f, 0.05f);
-    program.setVec3("u_pointLight[0].diffuse", 0.8f, 0.8f, 0.8f);
-    program.setVec3("u_pointLight[0].specular", 1.0f, 1.0f, 1.0f);
-    program.setFloat("u_pointLight[0].constant", 1.0f);
-    program.setFloat("u_pointLight[0].linear", 0.09f);
-    program.setFloat("u_pointLight[0].quadratic", 0.032f);
-    // set point light 2
-    program.setVec3("u_pointLight[1].position", g_pointLightPositions[1].x, g_pointLightPositions[1].y, g_pointLightPositions[1].z);
-    program.setVec3("u_pointLight[1].ambient", 0.05f, 0.05f, 0.05f);
-    program.setVec3("u_pointLight[1].diffuse", 0.8f, 0.8f, 0.8f);
-    program.setVec3("u_pointLight[1].specular", 1.0f, 1.0f, 1.0f);
-    program.setFloat("u_pointLight[1].constant", 1.0f);
-    program.setFloat("u_pointLight[1].linear", 0.09f);
-    program.setFloat("u_pointLight[1].quadratic", 0.032f);
-}
-
-void drawAsModel(GLBase::ShaderProgram &program)
-{
-    g_asModel->draw(program);
-}
-
-void drawCube(GLBase::Cube *cube, GLBase::ShaderProgram &program)
-{
-    glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * cube->getModelMatrix();
-
-    cube->draw(program, mvp);
-}
-
-void drawFloor(GLBase::Floor *floor, GLBase::ShaderProgram &program)
-{
-    glm::mat4 mvp = g_camera->getPerspectiveMatrix() * g_camera->getViewMatrix() * floor->getModelMatrix();
-
-    floor->draw(program, mvp);
-}
-
-void loadShader(GLBase::ShaderProgram &program, const std::string &vsPath, const std::string &fsPath)
+void loadShader(GLBase::ProgramGLSL &program, const std::string &vsPath, const std::string &fsPath)
 {
     if (!program.loadFile(vsPath, fsPath))
     {

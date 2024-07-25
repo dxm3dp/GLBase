@@ -3,6 +3,8 @@
 
 #include "Common/cpplang.hpp"
 
+#include <glm/glm.hpp>
+
 #include "Render/Material.hpp"
 #include "Render/Vertex.hpp"
 #include "Render/VertexArrayObject.hpp"
@@ -42,7 +44,10 @@ struct ModelBase : VertexArray
     }
 };
 
-struct ModelMesh : ModelBase { };
+struct ModelMesh : ModelBase
+{
+    glm::mat4 transform = glm::mat4(1.0f);
+};
 
 END_NAMESPACE(GLBase)
 

@@ -11,6 +11,7 @@
 #include "Common/GLMInc.hpp"
 #include "Common/ImageUtils.hpp"
 #include "Common/ThreadPool.hpp"
+#include "Model/Cube.hpp"
 #include "Model/Model.hpp"
 #include "Render/DemoScene.hpp"
 
@@ -19,35 +20,31 @@ BEGIN_NAMESPACE(GLBase)
 class ModelLoader
 {
 public:
-    explicit ModelLoader()
+    void loadFloor(ModelMesh &mesh, glm::mat4 transform = glm::mat4(1.0f))
     {
-        loadFloor();
-    }
+        mesh.vertices.push_back({glm::vec3(25.0f, -0.5f, 25.0f), glm::vec2(25.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
+        mesh.vertices.push_back({glm::vec3(-25.0f, -0.5f, 25.0f), glm::vec2(0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
+        mesh.vertices.push_back({glm::vec3(-25.0f, -0.5f, -25.0f), glm::vec2(0.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
+        mesh.vertices.push_back({glm::vec3(25.0f, -0.5f, -25.0f), glm::vec2(25.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
 
-public:
-    void loadFloor()
-    {
-        m_scene.floor.vertices.push_back({glm::vec3(25.0f, -0.5f, 25.0f), glm::vec2(25.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
-        m_scene.floor.vertices.push_back({glm::vec3(-25.0f, -0.5f, 25.0f), glm::vec2(0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
-        m_scene.floor.vertices.push_back({glm::vec3(-25.0f, -0.5f, -25.0f), glm::vec2(0.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
-        m_scene.floor.vertices.push_back({glm::vec3(25.0f, -0.5f, -25.0f), glm::vec2(25.0f, 25.0f), glm::vec3(0.0f, 1.0f, 0.0f)});
+        mesh.indices.push_back(0);
+        mesh.indices.push_back(2);
+        mesh.indices.push_back(1);
+        mesh.indices.push_back(0);
+        mesh.indices.push_back(3);
+        mesh.indices.push_back(2);
 
-        m_scene.floor.indices.push_back(0);
-        m_scene.floor.indices.push_back(2);
-        m_scene.floor.indices.push_back(1);
-        m_scene.floor.indices.push_back(0);
-        m_scene.floor.indices.push_back(3);
-        m_scene.floor.indices.push_back(2);
+        mesh.transform = transform;
 
-        m_scene.floor.material = std::make_shared<Material>();
-        m_scene.floor.material->shadingModel = ShadingModel::BlinnPhong;
-        m_scene.floor.material->baseColor = glm::vec4(1.0f);
+        mesh.material = std::make_shared<Material>();
+        mesh.material->shadingModel = ShadingModel::BlinnPhong;
+        mesh.material->baseColor = glm::vec4(1.0f);
 
         std::string texturePath = "../assets/Textures/wood.png";
         auto buffer = loadTextureFile(texturePath);
         if (buffer)
         {
-            auto &texData = m_scene.floor.material->textureData[MaterialTexType::ALBEDO];
+            auto &texData = mesh.material->textureData[MaterialTexType::ALBEDO];
             texData.tag = texturePath;
             texData.width = buffer->getWidth();
             texData.height = buffer->getHeight();
@@ -58,7 +55,53 @@ public:
             LOGE("ModelLoader::loadFloor loadTextureFile failed: %s, path: %s", Material::materialTexTypeStr(MaterialTexType::ALBEDO), texturePath.c_str());
         }
 
-        m_scene.floor.InitVertexArray();
+        mesh.InitVertexArray();
+    }
+
+    void loadCube(ModelMesh &mesh, glm::mat4 transform = glm::mat4(1.0f))
+    {
+        const float *cubeVertices = Cube::getVertices();
+
+        for(int i = 0; i < 12; i++)
+        {
+            for(int j = 0; j < 3; j++)
+            {
+                Vertex vertex{};
+                vertex.position.x = cubeVertices[i * 24 + j * 8 + 0];
+                vertex.position.y = cubeVertices[i * 24 + j * 8 + 1];
+                vertex.position.z = cubeVertices[i * 24 + j * 8 + 2];
+                vertex.normal.x = cubeVertices[i * 24 + j * 8 + 3];
+                vertex.normal.y = cubeVertices[i * 24 + j * 8 + 4];
+                vertex.normal.z = cubeVertices[i * 24 + j * 8 + 5];
+                vertex.texCoords.x = cubeVertices[i * 24 + j * 8 + 6];
+                vertex.texCoords.y = cubeVertices[i * 24 + j * 8 + 7];
+                mesh.vertices.push_back(vertex);
+                mesh.indices.push_back(i * 3 + j);
+            }
+        }
+
+        mesh.transform = transform;
+
+        mesh.material = std::make_shared<Material>();
+        mesh.material->shadingModel = ShadingModel::BlinnPhong;
+        mesh.material->baseColor = glm::vec4(1.0f);
+
+        std::string texturePath = "../assets/Textures/wood.png";
+        auto buffer = loadTextureFile(texturePath);
+        if (buffer)
+        {
+            auto &texData = mesh.material->textureData[MaterialTexType::ALBEDO];
+            texData.tag = texturePath;
+            texData.width = buffer->getWidth();
+            texData.height = buffer->getHeight();
+            texData.data = {buffer};
+        }
+        else
+        {
+            LOGE("ModelLoader::loadFloor loadTextureFile failed: %s, path: %s", Material::materialTexTypeStr(MaterialTexType::ALBEDO), texturePath.c_str());
+        }
+
+        mesh.InitVertexArray();
     }
 
     bool loadModel(const std::string &path)

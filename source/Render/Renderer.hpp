@@ -31,18 +31,18 @@ public:
         m_uniformBlockMaterial = CREATE_UNIFORM_BLOCK(UniformsMaterial);
     }
 
-    void pipelineSetup(ModelBase &model, ShadingModel shadingModel, const std::set<int> &uniformBlocks)
+    void pipelineSetup(ModelMesh &model, ShadingModel shadingModel, const std::set<int> &uniformBlocks)
     {
         setupVertexArray(model);
 
         setupMaterial(model, shadingModel, uniformBlocks);
     }
 
-    void pipelineDraw(ModelBase &model)
+    void pipelineDraw(ModelMesh &model)
     {
         // update uniforms
         updateUniformScene();
-        updateUniformModel(glm::mat4(1.0f), m_camera->getViewMatrix());
+        updateUniformModel(model.transform, m_camera->getViewMatrix());
         updateUniformMaterial(*model.material, 1.0f);
 
         // set vao
