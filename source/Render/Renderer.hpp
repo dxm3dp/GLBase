@@ -43,7 +43,7 @@ public:
         // update uniforms
         updateUniformScene();
         updateUniformModel(model.transform, m_camera->getViewMatrix());
-        updateUniformMaterial(*model.material, 1.0f);
+        updateUniformMaterial(*model.material, 0.5f);
 
         // set vao
         setVertexArrayObject(model.vao);
@@ -214,7 +214,7 @@ private:
         switch (shadingModel)
         {
             CASE_CREATE_SHADER_GL(ShadingModel::BaseColor, BasicGLSL);
-            CASE_CREATE_SHADER_GL(ShadingModel::BlinnPhong, BasicGLSL);
+            CASE_CREATE_SHADER_GL(ShadingModel::BlinnPhong, BlinnPhongWS);
             default:
                 break;
         }
@@ -241,8 +241,10 @@ private:
     {
         static UniformsScene uniformScene{};
 
-        uniformScene.u_ambientColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        uniformScene.u_ambientColor = glm::vec3(0.4f, 0.4f, 0.4f);
         uniformScene.u_cameraPosition = m_camera->position();
+        uniformScene.u_pointLightPosition = glm::vec3(2.0f, 3.0f, 2.0f);
+        uniformScene.u_pointLightColor = glm::vec3(0.6f, 0.5f, 0.9f);
 
         m_uniformBlockScene->setData(&uniformScene, sizeof(uniformScene));
     }

@@ -61,26 +61,25 @@ enum class UniformBlockType
     Material,
 };
 
-struct UniformsScene
+struct alignas(16) UniformsScene
 {
-    glm::vec3 u_ambientColor;
-    glm::vec3 u_cameraPosition;
-    //glm::vec3 u_pointLightPosition;
-    //glm::vec3 u_pointLightColor;
+    alignas(16) glm::vec3 u_ambientColor;
+    alignas(16) glm::vec3 u_cameraPosition;
+    alignas(16) glm::vec3 u_pointLightPosition;
+    alignas(16) glm::vec3 u_pointLightColor;
 };
 
-struct UniformsModel
+struct alignas(16) UniformsModel
 {
-    glm::mat4 u_modelMatrix;
-    glm::mat4 u_modelViewProjectionMatrix;
-    glm::mat3 u_inverseTransposeModelMatrix;
-    //glm::mat4 u_shadowMVPMatrix;
+    alignas(16) glm::mat4 u_modelMatrix;
+    alignas(16) glm::mat4 u_modelViewProjectionMatrix;
+    alignas(16) glm::mat3 u_inverseTransposeModelMatrix;
 };
 
-struct UniformsMaterial
+struct alignas(16) UniformsMaterial
 {
-    glm::float32_t u_kSpecular;
-    glm::vec4 u_baseColor;
+    alignas(4) glm::float32_t u_kSpecular;
+    alignas(16) glm::vec4 u_baseColor;
 };
 
 class MaterialObject
