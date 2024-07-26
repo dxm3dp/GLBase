@@ -33,7 +33,7 @@ enum class ShadingModel
     PBR,
 };
 
-enum MaterialTexType
+enum class MaterialTexType
 {
   NONE = 0,
 
@@ -133,6 +133,26 @@ public:
         return "";
     }
 
+    const char *samplerDefine(MaterialTexType usage)
+    {
+        switch (usage)
+        {
+            case MaterialTexType::ALBEDO:             return "ALBEDO_MAP";
+            case MaterialTexType::NORMAL:             return "NORMAL_MAP";
+            case MaterialTexType::EMISSIVE:           return "EMISSIVE_MAP";
+            case MaterialTexType::AMBIENT_OCCLUSION:  return "AO_MAP";
+            case MaterialTexType::METAL_ROUGHNESS:    return "METALROUGHNESS_MAP";
+            case MaterialTexType::CUBE:               return "CUBE_MAP";
+            case MaterialTexType::EQUIRECTANGULAR:    return "EQUIRECTANGULAR_MAP";
+            case MaterialTexType::IBL_IRRADIANCE:
+            case MaterialTexType::IBL_PREFILTER:      return "IBL_MAP";
+            default:
+                break;
+        }
+
+        return nullptr;
+    }
+
     static const char *samplerName(MaterialTexType usage)
     {
         switch (usage)
@@ -162,9 +182,8 @@ public:
     std::unordered_map<int, TextureData> textureData;
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
     std::shared_ptr<MaterialObject> materialObj = nullptr;
+    std::set<std::string> shaderDefines;
 };
-
-
 
 END_NAMESPACE(GLBase)
 

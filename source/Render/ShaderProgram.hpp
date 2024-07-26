@@ -20,6 +20,19 @@ public:
         return (int)m_programId;
     }
 
+    void addDefine(const std::string &def)
+    {
+        m_programGLSL.addDefine(def);
+    }
+
+    void addDefines(const std::set<std::string> &defines)
+    {
+        for (auto &def : defines)
+        {
+            addDefine(def);
+        }
+    }
+
     void bindResources(ShaderResources &resources)
     {
         for (auto &kv : resources.blocks)

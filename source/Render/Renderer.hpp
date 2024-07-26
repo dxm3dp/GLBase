@@ -73,6 +73,7 @@ private:
         if (material.textures.empty())
         {
             setupTextures(material);
+            material.shaderDefines = generateShaderDefines(material);
         }
 
         if (nullptr == material.materialObj)
@@ -146,7 +147,7 @@ private:
 
     bool setupShaderProgram(Material &material, ShadingModel shadingModel)
     {
-        size_t cacheKey = getShaderProgramCacheKey(shadingModel);
+        size_t cacheKey = getShaderProgramCacheKey(shadingModel, material.shaderDefines);
 
         auto cachedProgram = m_programCache.find(cacheKey);
         if (cachedProgram != m_programCache.end())
@@ -157,6 +158,9 @@ private:
         }
 
         auto program = createShaderProgram();
+
+        // to do addDefine
+
         bool success = loadShaders(*program, shadingModel);
         if (success)
         {
@@ -222,12 +226,14 @@ private:
         return false;
     }
 
-    size_t getShaderProgramCacheKey(ShadingModel shadingModel)
+    size_t getShaderProgramCacheKey(ShadingModel shadingModel, const std::set<std::string> &shaderDefines)
     {
         size_t seed = 0;
         HashUtils::hashCombine(seed, (int)shadingModel);
-
-        // to do add shader defines
+        for(auto &define : shaderDefines)
+        {
+            HashUtils::hashCombine(seed, define);
+        }
 
         return seed;
     }
@@ -296,6 +302,21 @@ private:
         {
             m_shaderProgram->bindResources(*resources);
         }
+    }
+
+    std::set<std::string> generateShaderDefines(Material &material)
+    {
+        std::set<std::string> shaderDefines;
+        for(auto &kv : material.textures)
+        {
+            const char * samplerDefine = material.samplerDefine((MaterialTexType)kv.first);
+            if (samplerDefine != nullptr)
+            {
+                shaderDefines.insert(samplerDefine);
+            }
+        }
+
+        return shaderDefines;
     }
 
 private:

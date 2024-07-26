@@ -44,7 +44,7 @@ public:
         auto buffer = loadTextureFile(texturePath);
         if (buffer)
         {
-            auto &texData = mesh.material->textureData[MaterialTexType::ALBEDO];
+            auto &texData = mesh.material->textureData[(int)MaterialTexType::ALBEDO];
             texData.tag = texturePath;
             texData.width = buffer->getWidth();
             texData.height = buffer->getHeight();
@@ -90,7 +90,7 @@ public:
         auto buffer = loadTextureFile(texturePath);
         if (buffer)
         {
-            auto &texData = mesh.material->textureData[MaterialTexType::ALBEDO];
+            auto &texData = mesh.material->textureData[(int)MaterialTexType::ALBEDO];
             texData.tag = texturePath;
             texData.width = buffer->getWidth();
             texData.height = buffer->getHeight();
@@ -379,7 +379,7 @@ public:
             auto buffer = loadTextureFile(absolutePath);
 			if (buffer)
             {
-				auto& texData = outMaterial.textureData[texType];
+				auto& texData = outMaterial.textureData[(int)texType];
 				texData.tag = absolutePath;
 				texData.width = buffer->getWidth();
 				texData.height = buffer->getHeight();
