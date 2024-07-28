@@ -7,6 +7,10 @@
 
 BEGIN_NAMESPACE(GLBase)
 
+constexpr float CAMERA_FOV = 60.f;
+constexpr float CAMERA_NEAR = 0.01f;
+constexpr float CAMERA_FAR = 100.f;
+
 enum CameraMovement
 {
     FORWARD,
@@ -23,6 +27,8 @@ const float YAW = -90.f;
 class Camera
 {
 public:
+    Camera() = default;
+
     Camera(glm::vec3 position, glm::vec3 target, glm::vec3 up)
         : m_position(position), m_front(target - position), m_up(up)
     {
@@ -31,12 +37,20 @@ public:
         m_yaw = YAW;
     }
 
+public:
     void setPerspective(float fov, float aspect, float near, float far)
     {
         m_fov = fov;
         m_aspect = aspect;
         m_near = near;
         m_far = far;
+    }
+
+    void lookat(const glm::vec3 &position, const glm::vec3 &target, const glm::vec3 &up)
+    {
+        m_position = position;
+        m_front = target - position;
+        m_up = up;
     }
 
     glm::mat4 getViewMatrix() const

@@ -130,16 +130,17 @@ int main()
     }
 
     g_camera = std::make_shared<GLBase::Camera>(g_cameraPos, g_cameraPos + g_cameraFront, g_cameraUp);
-    g_camera->setPerspective(glm::radians(60.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+    g_camera->setPerspective(glm::radians(GLBase::CAMERA_FOV), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, GLBase::CAMERA_NEAR, GLBase::CAMERA_FAR);
 
-    GLBase::ShadowMapping shadowMapping;
+    //GLBase::ShadowMapping shadowMapping;
 
     GLBase::ModelLoader modelLoader;
     modelLoader.loadFloor(modelLoader.getScene().floor);
-    modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.0f, 0.0f)));
+    modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    modelLoader.loadModel("../assets/DamagedHelmet/DamagedHelmet.gltf", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.1f, 0.0f)));
 
     GLBase::Renderer renderer;
-    renderer.create(g_camera);
+    renderer.create(g_camera, modelLoader.getScene());
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -150,11 +151,9 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderer.pipelineSetup(modelLoader.getScene().floor, GLBase::ShadingModel::BlinnPhong, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
-        renderer.pipelineSetup(modelLoader.getScene().cube, GLBase::ShadingModel::BlinnPhong, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
+        renderer.setupScene();
 
-        renderer.pipelineDraw(modelLoader.getScene().floor);
-        renderer.pipelineDraw(modelLoader.getScene().cube);
+        renderer.drawScene(false);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

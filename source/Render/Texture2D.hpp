@@ -47,10 +47,31 @@ public:
         glTexParameteri(m_target, GL_TEXTURE_WRAP_T, cvtWrap(sampler.wrapT));
         glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, cvtFilter(sampler.filterMin));
         glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, cvtFilter(sampler.filterMag));
-  }
 
-  void setImageData(const std::vector<std::shared_ptr<Buffer<RGBA>>> &buffers) override
-  {
+        glm::vec4 borderColor = cvtBorderColor(sampler.borderColor);
+        glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, &borderColor[0]);
+    }
+
+    void initImageData() override
+    {
+        glBindTexture(m_target, m_texId);
+        if (multiSample)
+        {
+            glTexImage2DMultisample(m_target, 4, m_glDesc.internalformat, width, height, GL_TRUE);
+        }
+        else
+        {
+            glTexImage2D(m_target, 0, m_glDesc.internalformat, width, height, 0, m_glDesc.format, m_glDesc.type, nullptr);
+
+            if (useMipmaps)
+            {
+                glGenerateMipmap(m_target);
+            }
+        }
+    }
+
+    void setImageData(const std::vector<std::shared_ptr<Buffer<RGBA>>> &buffers) override
+    {
         if (multiSample)
         {
             LOGE("setImageData not support: multi sample texture");
@@ -75,24 +96,6 @@ public:
         if (useMipmaps)
         {
             glGenerateMipmap(m_target);
-        }
-    }
-
-    void initImageData()
-    {
-        glBindTexture(m_target, m_texId);
-        if (multiSample)
-        {
-            glTexImage2DMultisample(m_target, 4, m_glDesc.internalformat, width, height, GL_TRUE);
-        }
-        else
-        {
-            glTexImage2D(m_target, 0, m_glDesc.internalformat, width, height, 0, m_glDesc.format, m_glDesc.type, nullptr);
-
-            if (useMipmaps)
-            {
-                glGenerateMipmap(m_target);
-            }
         }
     }
 

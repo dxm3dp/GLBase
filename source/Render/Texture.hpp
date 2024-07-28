@@ -27,6 +27,12 @@ enum class FilterMode
     LINEAR_MIPMAP_LINEAR,
 };
 
+enum class BorderColor
+{
+    BLACK = 0,
+    WHITE,
+};
+
 struct SamplerDesc
 {
     FilterMode filterMin = FilterMode::NEAREST;
@@ -35,6 +41,8 @@ struct SamplerDesc
     WrapMode wrapS = WrapMode::CLAMP_TO_EDGE;
     WrapMode wrapT = WrapMode::CLAMP_TO_EDGE;
     WrapMode wrapR = WrapMode::CLAMP_TO_EDGE;
+
+    BorderColor borderColor = BorderColor::BLACK;
 };
 
 enum class TextureType
@@ -108,6 +116,7 @@ public:
     }
 
     virtual void setSamplerDesc(SamplerDesc &sampler){};
+    virtual void initImageData() {};
     virtual void setImageData(const std::vector<std::shared_ptr<Buffer<RGBA>>> &buffers){};
 
 protected:

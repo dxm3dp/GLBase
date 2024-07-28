@@ -6,6 +6,9 @@
 #include "Common/HashUtils.hpp"
 #include "Config/Config.hpp"
 #include "Model/ModelBase.hpp"
+#include "Render/DemoScene.hpp"
+#include "Render/Framebuffer.hpp"
+#include "Render/RenderStates.hpp"
 #include "Render/ShaderProgram.hpp"
 #include "Render/Texture2D.hpp"
 #include "Render/UniformBlock.hpp"
@@ -13,6 +16,9 @@
 #include "Viewer/Camera.hpp"
 
 BEGIN_NAMESPACE(GLBase)
+
+#define SHADOW_MAP_WIDTH 1024
+#define SHADOW_MAP_HEIGHT 1024
 
 #define CREATE_UNIFORM_BLOCK(name) createUniformBlock(#name, sizeof(name))
 
@@ -23,12 +29,92 @@ BEGIN_NAMESPACE(GLBase)
 class Renderer
 {
 public:
-    void create(std::shared_ptr<Camera> &camera)
+    void create(std::shared_ptr<Camera> &camera, DemoScene &scene)
     {
-        m_camera = camera;
+        m_cameraMain = camera;
+        m_scene = scene;
+
+        m_cameraCurrent = m_cameraMain.get();
+
+        if (nullptr == m_cameraDepth)
+        {
+            m_cameraDepth = std::make_shared<Camera>();
+            m_cameraDepth->setPerspective(glm::radians(CAMERA_FOV), (float)SHADOW_MAP_WIDTH / (float)SHADOW_MAP_HEIGHT, CAMERA_NEAR, CAMERA_FAR);
+        }
+
         m_uniformBlockScene = CREATE_UNIFORM_BLOCK(UniformsScene);
         m_uniformBlockModel = CREATE_UNIFORM_BLOCK(UniformsModel);
         m_uniformBlockMaterial = CREATE_UNIFORM_BLOCK(UniformsMaterial);
+    }
+
+    void setupScene()
+    {
+        pipelineSetup(m_scene.floor, m_scene.floor.material->shadingModel, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
+
+        pipelineSetup(m_scene.cube, m_scene.cube.material->shadingModel, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
+
+        setupModelNode(m_scene.model->rootNode);
+    }
+
+    void drawScene(bool shadowPass)
+    {
+        updateUniformScene();
+        updateUniformModel(glm::mat4(1.0f), m_cameraCurrent->getViewMatrix());
+
+        if (!shadowPass)
+        {
+            updateUniformModel(m_scene.floor.transform, m_cameraCurrent->getViewMatrix());
+            updateUniformMaterial(*m_scene.floor.material, 0.5f);
+            pipelineDraw(m_scene.floor);
+        }
+
+        if (!shadowPass)
+        {
+            updateUniformModel(m_scene.cube.transform, m_cameraCurrent->getViewMatrix());
+            updateUniformMaterial(*m_scene.cube.material, 0.5f);
+            pipelineDraw(m_scene.cube);
+        }
+
+        ModelNode &rootNode = m_scene.model->rootNode;
+        drawModelNode(rootNode, shadowPass);
+    }
+
+private:
+    void setupModelNode(ModelNode &node)
+    {
+        for (auto &mesh : node.meshes)
+        {
+            pipelineSetup(mesh, mesh.material->shadingModel, {(int)UniformBlockType::Scene, (int)UniformBlockType::Model, (int)UniformBlockType::Material});
+        }
+
+        for (auto &child : node.children)
+        {
+            setupModelNode(child);
+        }
+    }
+
+    void drawModelNode(ModelNode &node, bool shadowPass)
+    {
+        glm::mat4 modelMatrix = node.transform;
+
+        updateUniformModel(modelMatrix, m_cameraCurrent->getViewMatrix());
+
+        for(auto &mesh : node.meshes)
+        {
+            pipelineDraw(mesh);
+        }
+
+        for(auto &child : node.children)
+        {
+            drawModelNode(child, shadowPass);
+        }
+    }
+
+    void drawModelMesh(ModelMesh &mesh, bool shadowPass)
+    {
+        updateUniformMaterial(*mesh.material, 0.5f);// specular
+
+        pipelineDraw(mesh);
     }
 
     void pipelineSetup(ModelMesh &model, ShadingModel shadingModel, const std::set<int> &uniformBlocks)
@@ -40,11 +126,6 @@ public:
 
     void pipelineDraw(ModelMesh &model)
     {
-        // update uniforms
-        updateUniformScene();
-        updateUniformModel(model.transform, m_camera->getViewMatrix());
-        updateUniformMaterial(*model.material, 0.5f);
-
         // set vao
         setVertexArrayObject(model.vao);
 
@@ -58,7 +139,55 @@ public:
         glDrawElements(GL_TRIANGLES, (GLsizei) model.vao->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
     }
 
-private:
+    void drawShadowMap()
+    {
+        ClearStates clearStates{};
+        clearStates.depthFlag = true;
+        clearStates.clearDepth = 1.0f;
+
+        beginRenderPass(m_fboShadow, clearStates);
+
+        setViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
+
+        m_cameraDepth->lookat(glm::vec3(2.0f, 3.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_cameraCurrent = m_cameraDepth.get();
+
+        drawScene(true);
+
+        endRenderPass();
+
+        m_cameraCurrent = m_cameraMain.get();
+    }
+
+    void beginRenderPass(std::shared_ptr<Framebuffer> &fbo, const ClearStates &clearStates)
+    {
+        fbo->bind();
+
+        GLbitfield clearBit = 0;
+        if(clearStates.colorFlag)
+        {
+            glClearColor(clearStates.clearColor.r, clearStates.clearColor.g, clearStates.clearColor.b, clearStates.clearColor.a);
+            clearBit |= GL_COLOR_BUFFER_BIT;
+        }
+        if(clearStates.depthFlag)
+        {
+            glClearDepth(clearStates.clearDepth);
+            clearBit |= GL_DEPTH_BUFFER_BIT;
+        }
+
+        glClear(clearBit);
+    }
+
+    void endRenderPass()
+    {
+        // do nothing
+    }
+
+    void setViewport(int x, int y, int width, int height)
+    {
+        glViewport(x, y, width, height);
+    }
+
     void setupVertexArray(ModelBase &model)
     {
         if (nullptr == model.vao)
@@ -158,8 +287,7 @@ private:
         }
 
         auto program = createShaderProgram();
-
-        // to do addDefine
+        program->addDefines(material.shaderDefines);
 
         bool success = loadShaders(*program, shadingModel);
         if (success)
@@ -219,6 +347,7 @@ private:
         {
             CASE_CREATE_SHADER_GL(ShadingModel::BaseColor, BasicGLSL);
             CASE_CREATE_SHADER_GL(ShadingModel::BlinnPhong, BlinnPhongWS);
+            CASE_CREATE_SHADER_GL(ShadingModel::PBR, BlinnPhongWS);
             default:
                 break;
         }
@@ -248,7 +377,7 @@ private:
         static UniformsScene uniformScene{};
 
         uniformScene.u_ambientColor = glm::vec3(0.4f, 0.4f, 0.4f);
-        uniformScene.u_cameraPosition = m_camera->position();
+        uniformScene.u_cameraPosition = m_cameraCurrent->position();
         uniformScene.u_pointLightPosition = glm::vec3(2.0f, 3.0f, 2.0f);
         uniformScene.u_pointLightColor = glm::vec3(0.6f, 0.5f, 0.9f);
 
@@ -260,7 +389,7 @@ private:
         static UniformsModel uniformModel{};
 
         uniformModel.u_modelMatrix = model;
-        uniformModel.u_modelViewProjectionMatrix = m_camera->getPerspectiveMatrix() * view * model;
+        uniformModel.u_modelViewProjectionMatrix = m_cameraCurrent->getPerspectiveMatrix() * view * model;
         uniformModel.u_inverseTransposeModelMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
 
         m_uniformBlockModel->setData(&uniformModel, sizeof(uniformModel));
@@ -319,8 +448,55 @@ private:
         return shaderDefines;
     }
 
+    void setupShadowMapBuffer()
+    {
+        if (nullptr == m_fboShadow)
+        {
+            m_fboShadow = createFramebuffer(true);
+        }
+
+        if (nullptr == m_texDepthShadow)
+        {
+            TextureDesc texDesc{};
+            texDesc.width = SHADOW_MAP_WIDTH;
+            texDesc.height = SHADOW_MAP_HEIGHT;
+            texDesc.type = TextureType::Texture2D;
+            texDesc.format = TextureFormat::FLOAT32;
+            texDesc.usage = (int)TextureUsage::Sampler | (int)TextureUsage::AttachmentDepth;
+            texDesc.useMipmaps = false;
+            texDesc.multiSample = false;
+            m_texDepthShadow = createTexture(texDesc);
+
+            SamplerDesc sampler{};
+            sampler.filterMin = FilterMode::NEAREST;
+            sampler.filterMag = FilterMode::NEAREST;
+            sampler.wrapS = WrapMode::CLAMP_TO_BORDER;
+            sampler.wrapT = WrapMode::CLAMP_TO_BORDER;
+            sampler.borderColor = BorderColor::WHITE;
+            m_texDepthShadow->setSamplerDesc(sampler);
+
+            m_texDepthShadow->initImageData();
+            m_fboShadow->setDepthAttachment(m_texDepthShadow);
+        }
+
+        if (!m_fboShadow->isValid())
+        {
+            LOGE("setupShadowMapBuffer failed");
+        }
+    }
+
+    std::shared_ptr<Framebuffer> createFramebuffer(bool offscreen)
+    {
+        return std::make_shared<Framebuffer>(offscreen);
+    }
+
 private:
-    std::shared_ptr<Camera> m_camera = nullptr;
+    DemoScene m_scene;
+
+    std::shared_ptr<Camera> m_cameraMain = nullptr;
+    std::shared_ptr<Camera> m_cameraDepth = nullptr;
+    Camera *m_cameraCurrent = nullptr;
+
     ShaderProgram *m_shaderProgram = nullptr;
 
     // caches
@@ -330,6 +506,11 @@ private:
     std::shared_ptr<UniformBlock> m_uniformBlockScene;
     std::shared_ptr<UniformBlock> m_uniformBlockModel;
     std::shared_ptr<UniformBlock> m_uniformBlockMaterial;
+
+    // shadow map
+    std::shared_ptr<Framebuffer> m_fboShadow;
+    std::shared_ptr<Texture> m_texDepthShadow;
+    std::shared_ptr<Texture> m_;
 };
 
 END_NAMESPACE(GLBase)

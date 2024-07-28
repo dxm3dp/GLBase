@@ -41,6 +41,18 @@ static inline GLint cvtFilter(FilterMode mode)
     return GL_NEAREST;
 }
 
+static inline glm::vec4 cvtBorderColor(BorderColor color)
+{
+    switch (color)
+    {
+        case BorderColor::BLACK:          return glm::vec4(0.f);
+        case BorderColor::WHITE:          return glm::vec4(1.f);
+        default:
+            break;
+    }
+    return glm::vec4(0.f);
+}
+
 END_NAMESPACE(GLBase)
 
 #endif // _ENUMS_OPENGL_HPP_

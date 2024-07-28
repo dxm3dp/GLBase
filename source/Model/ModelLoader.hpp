@@ -104,7 +104,7 @@ public:
         mesh.InitVertexArray();
     }
 
-    bool loadModel(const std::string &path)
+    bool loadModel(const std::string &path, glm::mat4 transform = glm::mat4(1.0f))
     {
         std::lock_guard<std::mutex> lock(m_modelLoadMutex);
 
@@ -136,7 +136,7 @@ public:
 
         preloadTextureFiles(scene, m_scene.model->resourcePath);
 
-        if (!processNode(scene->mRootNode, scene, m_scene.model->rootNode))
+        if (!processNode(scene->mRootNode, scene, m_scene.model->rootNode, transform))
         {
             LOGE("ModelLoader::loadModel, process node failed.");
             return false;
@@ -206,12 +206,14 @@ public:
         return buffer;
     }
 
-    bool processNode(aiNode *ai_node, const aiScene *ai_scene, ModelNode &outNode)
+    bool processNode(aiNode *ai_node, const aiScene *ai_scene, ModelNode &outNode, glm::mat4 &transform)
     {
         if (nullptr == ai_node)
         {
             return false;
         }
+
+        outNode.transform = transform * convertMatrix(ai_node->mTransformation);
 
         for (size_t i = 0; i < ai_node->mNumMeshes; i++)
         {
@@ -222,6 +224,7 @@ public:
                 if (processMesh(meshPtr, ai_scene, mesh))
                 {
                     // to do other
+
                     outNode.meshes.push_back(std::move(mesh));
                 }
             }
@@ -230,7 +233,7 @@ public:
         for (size_t i = 0; i < ai_node->mNumChildren; i++)
         {
 			ModelNode childNode;
-			if (processNode(ai_node->mChildren[i], ai_scene, childNode))
+			if (processNode(ai_node->mChildren[i], ai_scene, childNode, outNode.transform))
             {
 				outNode.children.push_back(std::move(childNode));
 			}
@@ -396,6 +399,19 @@ public:
     {
         return m_scene;
     }
+
+    glm::mat4 convertMatrix(const aiMatrix4x4& m)
+    {
+		glm::mat4 ret;
+		for (int i = 0; i < 4; i++)
+        {
+			for (int j = 0; j < 4; j++)
+            {
+				ret[j][i] = m[i][j];
+			}
+		}
+		return ret;
+	}
 
 private:
     DemoScene m_scene;
