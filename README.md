@@ -2,6 +2,8 @@
 
 ## 说明
 
+OpenGL 应用实践，包括各种缓存对象的使用，纹理映射，基础光照模型，阴影，摄像机控制，GLSL 等。
+
 项目中使用的模型是 [tinyrender](https://github.com/ssloy/tinyrenderer) 、[SoftGLRender](https://github.com/keith2018/SoftGLRender) 中的开源模型。
 
 ## 示例
@@ -59,6 +61,10 @@ cd GLBase/build
 - `glfw` [https://github.com/glfw/glfw](https://github.com/glfw/glfw)
 - `glm` [https://github.com/g-truc/glm](https://github.com/g-truc/glm)
 - `stb_image.h` [https://github.com/nothings/stb](https://github.com/nothings/stb)
+
+## 施工中
+
+- Shadow Mapping
 
 ## 参考
 
