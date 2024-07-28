@@ -42,6 +42,7 @@ enum class MaterialTexType
   EMISSIVE,
   AMBIENT_OCCLUSION,
   METAL_ROUGHNESS,
+  SPECULAR,
 
   CUBE,
   EQUIRECTANGULAR,
@@ -121,6 +122,7 @@ public:
             CASE_ENUM_STR(MaterialTexType::EMISSIVE);
             CASE_ENUM_STR(MaterialTexType::AMBIENT_OCCLUSION);
             CASE_ENUM_STR(MaterialTexType::METAL_ROUGHNESS);
+            CASE_ENUM_STR(MaterialTexType::SPECULAR);
             CASE_ENUM_STR(MaterialTexType::CUBE);
             CASE_ENUM_STR(MaterialTexType::EQUIRECTANGULAR);
             CASE_ENUM_STR(MaterialTexType::IBL_IRRADIANCE);
@@ -142,6 +144,7 @@ public:
             case MaterialTexType::EMISSIVE:           return "EMISSIVE_MAP";
             case MaterialTexType::AMBIENT_OCCLUSION:  return "AO_MAP";
             case MaterialTexType::METAL_ROUGHNESS:    return "METALROUGHNESS_MAP";
+            case MaterialTexType::SPECULAR:           return "SPECULAR_MAP";
             case MaterialTexType::CUBE:               return "CUBE_MAP";
             case MaterialTexType::EQUIRECTANGULAR:    return "EQUIRECTANGULAR_MAP";
             case MaterialTexType::IBL_IRRADIANCE:
@@ -162,6 +165,7 @@ public:
             case MaterialTexType::EMISSIVE:           return "u_emissiveMap";
             case MaterialTexType::AMBIENT_OCCLUSION:  return "u_aoMap";
             case MaterialTexType::METAL_ROUGHNESS:    return "u_metalRoughnessMap";
+            case MaterialTexType::SPECULAR:           return "u_specularMap";
             case MaterialTexType::CUBE:               return "u_cubeMap";
             case MaterialTexType::EQUIRECTANGULAR:    return "u_equirectangularMap";
             case MaterialTexType::IBL_IRRADIANCE:     return "u_irradianceMap";

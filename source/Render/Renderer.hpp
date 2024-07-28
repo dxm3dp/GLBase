@@ -378,7 +378,7 @@ private:
 
         uniformScene.u_ambientColor = glm::vec3(0.4f, 0.4f, 0.4f);
         uniformScene.u_cameraPosition = m_cameraCurrent->position();
-        uniformScene.u_pointLightPosition = glm::vec3(2.0f, 3.0f, 2.0f);
+        uniformScene.u_pointLightPosition = glm::vec3(1.0f, 3.0f, 1.0f);
         uniformScene.u_pointLightColor = glm::vec3(0.6f, 0.5f, 0.9f);
 
         m_uniformBlockScene->setData(&uniformScene, sizeof(uniformScene));
@@ -510,7 +510,6 @@ private:
     // shadow map
     std::shared_ptr<Framebuffer> m_fboShadow;
     std::shared_ptr<Texture> m_texDepthShadow;
-    std::shared_ptr<Texture> m_;
 };
 
 END_NAMESPACE(GLBase)

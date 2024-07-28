@@ -371,6 +371,9 @@ public:
 			case aiTextureType_LIGHTMAP:
 				texType = MaterialTexType::AMBIENT_OCCLUSION;
 				break;
+            case aiTextureType_SPECULAR:
+                texType = MaterialTexType::SPECULAR;
+                break;
 			case aiTextureType_UNKNOWN:
 				texType = MaterialTexType::METAL_ROUGHNESS;
 				break;

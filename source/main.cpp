@@ -137,7 +137,7 @@ int main()
     GLBase::ModelLoader modelLoader;
     modelLoader.loadFloor(modelLoader.getScene().floor);
     modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-    modelLoader.loadModel("../assets/DamagedHelmet/DamagedHelmet.gltf", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.1f, 0.0f)));
+    modelLoader.loadModel("../assets/DamagedHelmet/DamagedHelmet.gltf", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)));
 
     GLBase::Renderer renderer;
     renderer.create(g_camera, modelLoader.getScene());
