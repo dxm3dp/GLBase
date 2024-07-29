@@ -11,6 +11,7 @@ OpenGL 应用实践，包括各种缓存对象的使用，纹理映射，基础�
 |                               |                                |
 |-------------------------------|--------------------------------|
 | ![](screenshot/BlinnPhong.png)   | ![](screenshot/ShadowMapping.png)      |
+| ![](screenshot/BlinnPhong02.png)   |       |
 
 ## 功能
 
@@ -64,7 +65,7 @@ cd GLBase/build
 
 ## 施工中
 
-- Shadow Mapping
+- 封装 Shadow Pass
 
 ## 参考
 
