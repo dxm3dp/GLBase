@@ -31,6 +31,7 @@ enum class ShadingModel
     BaseColor,
     BlinnPhong,
     PBR,
+    Skybox,
 };
 
 enum class MaterialTexType
@@ -75,6 +76,7 @@ struct alignas(16) UniformsModel
     alignas(16) glm::mat4 u_modelMatrix;
     alignas(16) glm::mat4 u_modelViewProjectionMatrix;
     alignas(16) glm::mat3 u_inverseTransposeModelMatrix;
+    alignas(16) glm::mat4 u_shadowMVPMatrix;
 };
 
 struct alignas(16) UniformsMaterial

@@ -45,6 +45,8 @@ public:
         m_uniformBlockScene = CREATE_UNIFORM_BLOCK(UniformsScene);
         m_uniformBlockModel = CREATE_UNIFORM_BLOCK(UniformsModel);
         m_uniformBlockMaterial = CREATE_UNIFORM_BLOCK(UniformsMaterial);
+
+        m_shadowPlaceholder = createTexture2DDefault(1, 1, TextureFormat::FLOAT32, (int)TextureUsage::Sampler, false);
     }
 
     void setupScene()
@@ -110,9 +112,9 @@ private:
         }
     }
 
-    void drawModelMesh(ModelMesh &mesh, bool shadowPass)
+    void drawModelMesh(ModelMesh &mesh, bool shadowPass, float specular)
     {
-        updateUniformMaterial(*mesh.material, 0.5f);// specular
+        updateUniformMaterial(*mesh.material, specular);
 
         pipelineDraw(mesh);
     }
@@ -146,7 +148,6 @@ private:
         clearStates.clearDepth = 1.0f;
 
         beginRenderPass(m_fboShadow, clearStates);
-
         setViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
         m_cameraDepth->lookat(glm::vec3(2.0f, 3.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -272,6 +273,11 @@ private:
             texture->tag = kv.second.tag;
             material.textures[kv.first] = texture;
         }
+
+        if (material.shadingModel != ShadingModel::Skybox)
+        {
+            material.textures[(int)MaterialTexType::SHADOWMAP] = m_shadowPlaceholder;
+        }
     }
 
     bool setupShaderProgram(Material &material, ShadingModel shadingModel)
@@ -392,6 +398,15 @@ private:
         uniformModel.u_modelViewProjectionMatrix = m_cameraCurrent->getPerspectiveMatrix() * view * model;
         uniformModel.u_inverseTransposeModelMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
 
+        if (m_cameraDepth != nullptr)
+        {
+            const glm::mat4 biasMatrix = {0.5f, 0.0f, 0.0f, 0.0f,
+                                          0.0f, 0.5f, 0.0f, 0.0f,
+                                          0.0f, 0.0f, 1.0f, 0.0f,
+                                          0.5f, 0.5f, 0.0f, 1.0f};
+            uniformModel.u_shadowMVPMatrix = biasMatrix * m_cameraDepth->getPerspectiveMatrix() * m_cameraDepth->getViewMatrix() * model;
+        }
+
         m_uniformBlockModel->setData(&uniformModel, sizeof(uniformModel));
     }
 
@@ -490,6 +505,46 @@ private:
         return std::make_shared<Framebuffer>(offscreen);
     }
 
+    void updateShadowTextures(MaterialObject *materialObj, bool shadowPass)
+    {
+        if (nullptr == materialObj->shaderResources)
+            return;
+
+        auto &samplers = materialObj->shaderResources->samplers;
+        if (shadowPass)
+        {
+            samplers[(int)MaterialTexType::SHADOWMAP]->setTexture(m_shadowPlaceholder);
+        }
+        else
+        {
+            samplers[(int)MaterialTexType::SHADOWMAP]->setTexture(m_texDepthShadow);
+        }
+    }
+
+    std::shared_ptr<Texture> createTexture2DDefault(int width, int height, TextureFormat format, uint32_t usage, bool mipmaps)
+    {
+        TextureDesc texDesc{};
+        texDesc.width = width;
+        texDesc.height = height;
+        texDesc.type = TextureType::Texture2D;
+        texDesc.format = format;
+        texDesc.usage = usage;
+        texDesc.useMipmaps = mipmaps;
+        texDesc.multiSample = false;
+
+        auto texture2d = createTexture(texDesc);
+        if (nullptr == texture2d)
+            return nullptr;
+
+        SamplerDesc sampler{};
+        sampler.filterMin = mipmaps ? FilterMode::LINEAR_MIPMAP_LINEAR : FilterMode::LINEAR;
+        sampler.filterMag = FilterMode::LINEAR;
+        texture2d->setSamplerDesc(sampler);
+
+        texture2d->initImageData();
+        return texture2d;
+    }
+
 private:
     DemoScene m_scene;
 
@@ -510,6 +565,7 @@ private:
     // shadow map
     std::shared_ptr<Framebuffer> m_fboShadow;
     std::shared_ptr<Texture> m_texDepthShadow;
+    std::shared_ptr<Texture> m_shadowPlaceholder;
 };
 
 END_NAMESPACE(GLBase)
