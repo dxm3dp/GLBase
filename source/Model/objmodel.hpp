@@ -3,7 +3,7 @@
 
 #include "Common/cpplang.hpp"
 
-#include <glm/glm.hpp>
+#include "Common/GLMInc.hpp"
 
 #include "Common/Logger.hpp"
 #include "Model/TGAImage.hpp"

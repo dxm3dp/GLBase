@@ -3,8 +3,7 @@
 #include <glad/glad.h>
 // GLFW (include after glad)
 #include <glfw/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "Common/GLMInc.hpp"
 
 #include "Common/Logger.hpp"
 #include "Model/AsModel.hpp"
@@ -132,8 +131,6 @@ int main()
     g_camera = std::make_shared<GLBase::Camera>(g_cameraPos, g_cameraPos + g_cameraFront, g_cameraUp);
     g_camera->setPerspective(glm::radians(GLBase::CAMERA_FOV), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, GLBase::CAMERA_NEAR, GLBase::CAMERA_FAR);
 
-    //GLBase::ShadowMapping shadowMapping;
-
     GLBase::ModelLoader modelLoader;
     modelLoader.loadFloor(modelLoader.getScene().floor);
     modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
@@ -151,9 +148,7 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        renderer.setupScene();
-
-        renderer.drawScene(false);
+        renderer.drawFrame();
 
         glfwSwapBuffers(window);
         glfwPollEvents();

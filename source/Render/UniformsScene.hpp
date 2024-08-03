@@ -3,7 +3,7 @@
 
 #include "Common/cpplang.hpp"
 
-#include <glm/glm.hpp>
+#include "Common/GLMInc.hpp"
 
 BEGIN_NAMESPACE(GLBase)
 

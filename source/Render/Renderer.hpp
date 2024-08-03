@@ -49,6 +49,17 @@ public:
         m_shadowPlaceholder = createTexture2DDefault(1, 1, TextureFormat::FLOAT32, (int)TextureUsage::Sampler, false);
     }
 
+    void drawFrame()
+    {
+        //setupShadowMapBuffer();
+
+        setupScene();
+
+        //drawShadowMap();
+
+        drawMainPass();
+    }
+
     void setupScene()
     {
         pipelineSetup(m_scene.floor, m_scene.floor.material->shadingModel, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
@@ -141,6 +152,22 @@ private:
         glDrawElements(GL_TRIANGLES, (GLsizei) model.vao->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
     }
 
+    void drawMainPass()
+    {
+        ClearStates clearStates{};
+        clearStates.colorFlag = true;
+        clearStates.depthFlag = true;
+        clearStates.clearColor = glm::vec4(0.2f, 0.3f, 0.3f, 1.0f);
+        clearStates.clearDepth = 1.0f;
+
+        beginRenderPass(clearStates);
+        setViewport(0, 0, 1024, 1024);
+
+        drawScene(false);
+
+        endRenderPass();
+    }
+
     void drawShadowMap()
     {
         ClearStates clearStates{};
@@ -150,7 +177,7 @@ private:
         beginRenderPass(m_fboShadow, clearStates);
         setViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
-        m_cameraDepth->lookat(glm::vec3(2.0f, 3.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_cameraDepth->lookat(glm::vec3(5.0f, 5.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         m_cameraCurrent = m_cameraDepth.get();
 
         drawScene(true);
@@ -163,6 +190,25 @@ private:
     void beginRenderPass(std::shared_ptr<Framebuffer> &fbo, const ClearStates &clearStates)
     {
         fbo->bind();
+
+        GLbitfield clearBit = 0;
+        if(clearStates.colorFlag)
+        {
+            glClearColor(clearStates.clearColor.r, clearStates.clearColor.g, clearStates.clearColor.b, clearStates.clearColor.a);
+            clearBit |= GL_COLOR_BUFFER_BIT;
+        }
+        if(clearStates.depthFlag)
+        {
+            glClearDepth(clearStates.clearDepth);
+            clearBit |= GL_DEPTH_BUFFER_BIT;
+        }
+
+        glClear(clearBit);
+    }
+
+    void beginRenderPass(const ClearStates &clearStates)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         GLbitfield clearBit = 0;
         if(clearStates.colorFlag)
@@ -384,10 +430,10 @@ private:
 
         uniformScene.u_ambientColor = glm::vec3(0.4f, 0.4f, 0.4f);
         uniformScene.u_cameraPosition = m_cameraCurrent->position();
-        uniformScene.u_pointLightPosition = glm::vec3(1.0f, 3.0f, 1.0f);
+        uniformScene.u_pointLightPosition = glm::vec3(5.0f, 5.0f, 1.0f);
         uniformScene.u_pointLightColor = glm::vec3(0.6f, 0.5f, 0.9f);
 
-        m_uniformBlockScene->setData(&uniformScene, sizeof(uniformScene));
+        m_uniformBlockScene->setData(&uniformScene, sizeof(UniformsScene));
     }
 
     void updateUniformModel(const glm::mat4 &model, const glm::mat4 &view)
@@ -404,10 +450,10 @@ private:
                                           0.0f, 0.5f, 0.0f, 0.0f,
                                           0.0f, 0.0f, 1.0f, 0.0f,
                                           0.5f, 0.5f, 0.0f, 1.0f};
-            uniformModel.u_shadowMVPMatrix = biasMatrix * m_cameraDepth->getPerspectiveMatrix() * m_cameraDepth->getViewMatrix() * model;
+            uniformModel.u_shadowMVPMatrix = m_cameraDepth->getPerspectiveMatrix() * m_cameraDepth->getViewMatrix() * model;
         }
 
-        m_uniformBlockModel->setData(&uniformModel, sizeof(uniformModel));
+        m_uniformBlockModel->setData(&uniformModel, sizeof(UniformsModel));
     }
 
     void updateUniformMaterial(Material &material, float specular)
@@ -417,7 +463,7 @@ private:
         uniformMaterial.u_baseColor = material.baseColor;
         uniformMaterial.u_kSpecular = specular;
 
-        m_uniformBlockMaterial->setData(&uniformMaterial, sizeof(uniformMaterial));
+        m_uniformBlockMaterial->setData(&uniformMaterial, sizeof(UniformsMaterial));
     }
 
     void setVertexArrayObject(std::shared_ptr<VertexArrayObject> &vao)
@@ -563,9 +609,9 @@ private:
     std::shared_ptr<UniformBlock> m_uniformBlockMaterial;
 
     // shadow map
-    std::shared_ptr<Framebuffer> m_fboShadow;
-    std::shared_ptr<Texture> m_texDepthShadow;
-    std::shared_ptr<Texture> m_shadowPlaceholder;
+    std::shared_ptr<Framebuffer> m_fboShadow = nullptr;
+    std::shared_ptr<Texture> m_texDepthShadow = nullptr;
+    std::shared_ptr<Texture> m_shadowPlaceholder = nullptr;
 };
 
 END_NAMESPACE(GLBase)

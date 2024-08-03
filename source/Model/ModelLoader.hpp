@@ -6,9 +6,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include "Common/GLMInc.hpp"
 
 #include "Common/Buffer.hpp"
-#include "Common/GLMInc.hpp"
 #include "Common/ImageUtils.hpp"
 #include "Common/ThreadPool.hpp"
 #include "Model/Cube.hpp"

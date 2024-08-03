@@ -3,6 +3,7 @@ in vec3 v_worldPos;
 in vec3 v_worldNormal;
 in vec3 v_worldLightDir;
 in vec3 v_worldViewDir;
+in vec4 v_shadowFragPos;
 
 #if defined(NORMAL_MAP)
 in vec3 v_worldTangent;
@@ -40,6 +41,11 @@ uniform sampler2D u_emissiveMap;
 uniform sampler2D u_aoMap;
 #endif
 
+uniform sampler2D u_shadowMap;
+
+const float depthBiasCoeff = 0.00025;
+const float depthBiasMin = 0.00005;
+
 vec3 GetNormal()
 {
 #if defined(NORMAL_MAP)
@@ -55,6 +61,42 @@ vec3 GetNormal()
 #else
     return normalize(v_worldNormal);
 #endif
+}
+
+float ShadowCalculation(vec4 fragPos, vec3 normal)
+{
+    vec3 projCoords = fragPos.xyz / fragPos.w;
+    float currentDepth = projCoords.z;
+
+    #if defined(OpenGL)// [-1, 1] -> [0, 1]
+    currentDepth = currentDepth * 0.5 + 0.5;
+    #endif
+
+    if (currentDepth < 0.0 || currentDepth > 1.0) {
+        return 0.0;
+    }
+
+    float bias = max(depthBiasCoeff * (1.0 - dot(normal, normalize(v_worldLightDir))), depthBiasMin);
+    #if defined(OpenGL)
+    bias = bias * 0.5;
+    #endif
+
+    float shadow = 0.0;
+
+    // PCF
+    vec2 pixelOffset = 1.0 / textureSize(u_shadowMap, 0);
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            float pcfDepth = texture(u_shadowMap, projCoords.xy + vec2(x, y) * pixelOffset).r;
+            //if (u_reverseZ) {
+                //shadow += currentDepth + bias < pcfDepth ? 1.0 : 0.0;
+            //} else {
+                shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+            //}
+        }
+    }
+    shadow /= 9.0;
+    return shadow;
 }
 
 void main()
@@ -84,6 +126,11 @@ void main()
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(N, halfwayDir), 0.0), 128.0);
     vec3 specular = u_pointLightColor * u_kSpecular * spec;
+
+    // calculate shadow
+    float shadow = 1.0 - ShadowCalculation(v_shadowFragPos, N);
+    diffuse *= shadow;
+    specular *= shadow;
 
     vec3 emissive = vec3(0.0);
 #if defined(EMISSIVE_MAP)

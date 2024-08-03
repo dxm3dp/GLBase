@@ -3,7 +3,7 @@
 
 #include "Common/cpplang.hpp"
 
-#include <glm/glm.hpp>
+#include "Common/GLMInc.hpp"
 
 #include "Common/Buffer.hpp"
 #include "Render/ShaderProgram.hpp"
@@ -63,7 +63,7 @@ enum class UniformBlockType
     Material,
 };
 
-struct alignas(16) UniformsScene
+struct UniformsScene
 {
     alignas(16) glm::vec3 u_ambientColor;
     alignas(16) glm::vec3 u_cameraPosition;
@@ -71,7 +71,7 @@ struct alignas(16) UniformsScene
     alignas(16) glm::vec3 u_pointLightColor;
 };
 
-struct alignas(16) UniformsModel
+struct UniformsModel
 {
     alignas(16) glm::mat4 u_modelMatrix;
     alignas(16) glm::mat4 u_modelViewProjectionMatrix;
@@ -79,7 +79,7 @@ struct alignas(16) UniformsModel
     alignas(16) glm::mat4 u_shadowMVPMatrix;
 };
 
-struct alignas(16) UniformsMaterial
+struct UniformsMaterial
 {
     alignas(4) glm::float32_t u_kSpecular;
     alignas(16) glm::vec4 u_baseColor;

@@ -3,7 +3,7 @@
 
 #include "Common/cpplang.hpp"
 
-#include <glm/glm.hpp>
+#include "Common/GLMInc.hpp"
 
 #include "Render/Material.hpp"
 #include "Render/Vertex.hpp"

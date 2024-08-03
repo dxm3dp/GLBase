@@ -4,7 +4,7 @@
 #include "Common/cpplang.hpp"
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
+#include "Common/GLMInc.hpp"
 
 #include "Common/ImageUtils.hpp"
 #include "Render/ProgramGLSL.hpp"

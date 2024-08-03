@@ -84,7 +84,7 @@ public:
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
         glFramebufferTexture2D(GL_FRAMEBUFFER,
-                               GL_DEPTH_COMPONENT,
+                               GL_DEPTH_ATTACHMENT,
                                depth->multiSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D,
                                depth->getId(),
                                0);
