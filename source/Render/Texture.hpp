@@ -95,7 +95,7 @@ public:
         switch(format)
         {
             case TextureFormat::RGBA8:
-                ret.internalformat = GL_RGBA8;
+                ret.internalformat = GL_RGBA;
                 ret.format = GL_RGBA;
                 ret.type = GL_UNSIGNED_BYTE;
                 break;
@@ -115,9 +115,20 @@ public:
         return (int)m_texId;
     }
 
+    inline uint32_t getLevelWidth(uint32_t level)
+    {
+        return std::max(1, width >> level);
+    }
+
+    inline uint32_t getLevelHeight(uint32_t level)
+    {
+        return std::max(1, height >> level);
+    }
+
     virtual void setSamplerDesc(SamplerDesc &sampler){};
     virtual void initImageData() {};
     virtual void setImageData(const std::vector<std::shared_ptr<Buffer<RGBA>>> &buffers){};
+    virtual void dumpImage(const char *path, uint32_t layer, uint32_t level) = 0;
 
 protected:
     GLuint m_texId = 0;

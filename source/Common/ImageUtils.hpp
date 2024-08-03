@@ -5,7 +5,9 @@
 
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb/stb_image.h>
+#include <stb/stb_image_write.h>
 
 #include "Common/Buffer.hpp"
 #include "Common/GLMInc.hpp"
@@ -118,6 +120,42 @@ public:
         stbi_image_free(data);
 
         return buffer;
+    }
+
+    static void writeImage(char const *filename, int w, int h, int comp, const void *data, int strideInBytes, bool flipY)
+    {
+        stbi_flip_vertically_on_write(flipY);
+        stbi_write_png(filename, w, h, comp, data, strideInBytes);
+    }
+
+    static void convertFloatImage(RGBA *dst, float *src, uint32_t width, uint32_t height)
+    {
+        float *srcPixel = src;
+
+        float depthMin = FLT_MAX;
+        float depthMax = FLT_MIN;
+        for (int i = 0; i < width * height; i++)
+        {
+            float depth = *srcPixel;
+            depthMin = std::min(depthMin, depth);
+            depthMax = std::max(depthMax, depth);
+            srcPixel++;
+        }
+
+        srcPixel = src;
+        RGBA *dstPixel = dst;
+        for (int i = 0; i < width * height; i++)
+        {
+            float depth = *srcPixel;
+            depth = (depth - depthMin) / (depthMax - depthMin);
+            dstPixel->r = glm::clamp((int) (depth * 255.f), 0, 255);
+            dstPixel->g = dstPixel->r;
+            dstPixel->b = dstPixel->r;
+            dstPixel->a = 255;
+
+            srcPixel++;
+            dstPixel++;
+        }
     }
 };
 

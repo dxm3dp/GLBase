@@ -99,6 +99,40 @@ public:
         }
     }
 
+    void dumpImage(const char *path, uint32_t layer, uint32_t level) override
+    {
+        if (multiSample)
+            return;
+
+        GLuint fbo;
+        GL_CHECK(glGenFramebuffers(1, &fbo));
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
+
+        GLenum attachment = format == TextureFormat::FLOAT32 ? GL_DEPTH_ATTACHMENT : GL_COLOR_ATTACHMENT0;
+        GLenum target = multiSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
+        //if (type == TextureType_CUBE) {
+        //target = OpenGL::cvtCubeFace(static_cast<CubeMapFace>(layer));
+        //}
+        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, m_texId, level);
+
+        auto levelWidth = (int32_t) getLevelWidth(level);
+        auto levelHeight = (int32_t) getLevelHeight(level);
+
+        auto *pixels = new uint8_t[levelWidth * levelHeight * 4];
+        glReadPixels(0, 0, levelWidth, levelHeight, m_glDesc.format, m_glDesc.type, pixels);
+
+        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        GL_CHECK(glDeleteFramebuffers(1, &fbo));
+
+        // convert float to rgba
+        if (format == TextureFormat::FLOAT32)
+        {
+            ImageUtils::convertFloatImage(reinterpret_cast<RGBA *>(pixels), reinterpret_cast<float *>(pixels), levelWidth, levelHeight);
+        }
+        ImageUtils::writeImage(path, levelWidth, levelHeight, 4, pixels, levelWidth * 4, true);
+        delete[] pixels;
+  }
+
 private:
     GLenum m_target = 0;
 };
