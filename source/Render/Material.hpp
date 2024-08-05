@@ -185,7 +185,7 @@ public:
     ShadingModel shadingModel = ShadingModel::Unknown;
     glm::vec4 baseColor = glm::vec4(1.0f);
 
-    std::unordered_map<int, TextureData> textureData;
+    std::unordered_map<int, TextureData> textureData;// key - TextureType(Albedo, Normal, ...)
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
     std::shared_ptr<MaterialObject> materialObj = nullptr;
     std::set<std::string> shaderDefines;

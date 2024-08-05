@@ -36,12 +36,12 @@ public:
 
         mesh.transform = transform;
 
-        mesh.material = std::make_shared<Material>();
+        mesh.material = std::make_shared<Material>(); // create a new material
         mesh.material->shadingModel = ShadingModel::BlinnPhong;
         mesh.material->baseColor = glm::vec4(1.0f);
 
         std::string texturePath = "../assets/Textures/wood.png";
-        auto buffer = loadTextureFile(texturePath);
+        auto buffer = loadTextureFile(texturePath); // create a new buffer and cache
         if (buffer)
         {
             auto &texData = mesh.material->textureData[(int)MaterialTexType::ALBEDO];
@@ -82,7 +82,7 @@ public:
 
         mesh.transform = transform;
 
-        mesh.material = std::make_shared<Material>();
+        mesh.material = std::make_shared<Material>();// create a new material
         mesh.material->shadingModel = ShadingModel::BlinnPhong;
         mesh.material->baseColor = glm::vec4(1.0f);
 

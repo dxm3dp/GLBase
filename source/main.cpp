@@ -20,15 +20,6 @@ const int SCREEN_HEIGHT = 1024;
 
 GLBase::AsModel *g_asModel = nullptr;
 
-glm::vec3 g_floorPos = glm::vec3(0.0f, -1.0f, 0.0f);
-
-glm::vec3 g_lightPos = glm::vec3(1.0f, 4.0f, 1.0f);
-glm::vec3 g_pointLightPositions[] =
-{
-    glm::vec3( 0.7f,  0.2f,  2.0f),
-    glm::vec3( -1.0f, 0.3f, -4.0f)
-};
-
 std::shared_ptr<GLBase::Camera> g_camera = nullptr;
 glm::vec3 g_cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 g_cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -133,8 +124,8 @@ int main()
 
     GLBase::ModelLoader modelLoader;
     modelLoader.loadFloor(modelLoader.getScene().floor);
-    modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-    modelLoader.loadModel("../assets/DamagedHelmet/DamagedHelmet.gltf", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)));
+    modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f)));
+    modelLoader.loadModel("../assets/DamagedHelmet/DamagedHelmet.gltf", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, 0.0f)));
 
     GLBase::Renderer renderer;
     renderer.create(g_camera, modelLoader.getScene());
@@ -158,13 +149,4 @@ int main()
     glfwTerminate();
 
     return 0;
-}
-
-void loadShader(GLBase::ProgramGLSL &program, const std::string &vsPath, const std::string &fsPath)
-{
-    if (!program.loadFile(vsPath, fsPath))
-    {
-        LOGE("Failed to initialize shader");
-        glfwTerminate();
-    }
 }

@@ -49,13 +49,18 @@ public:
         m_shadowPlaceholder = createTexture2DDefault(1, 1, TextureFormat::FLOAT32, (int)TextureUsage::Sampler, false);
     }
 
+    void destroy()
+    {
+        // to do
+    }
+
     void drawFrame()
     {
-        //setupShadowMapBuffer();
+        setupShadowMapBuffer();
 
         setupScene();
 
-        //drawShadowMap();
+        drawShadowMap();
 
         drawMainPass();
     }
@@ -77,16 +82,11 @@ public:
         if (!shadowPass)
         {
             updateUniformModel(m_scene.floor.transform, m_cameraCurrent->getViewMatrix());
-            updateUniformMaterial(*m_scene.floor.material, 0.5f);
-            pipelineDraw(m_scene.floor);
+            drawModelMesh(m_scene.floor, shadowPass, 0.5f);
         }
 
-        if (!shadowPass)
-        {
-            updateUniformModel(m_scene.cube.transform, m_cameraCurrent->getViewMatrix());
-            updateUniformMaterial(*m_scene.cube.material, 0.5f);
-            pipelineDraw(m_scene.cube);
-        }
+        updateUniformModel(m_scene.cube.transform, m_cameraCurrent->getViewMatrix());
+        drawModelMesh(m_scene.cube, shadowPass, 0.5f);
 
         ModelNode &rootNode = m_scene.model->rootNode;
         drawModelNode(rootNode, shadowPass);
@@ -114,7 +114,7 @@ private:
 
         for(auto &mesh : node.meshes)
         {
-            pipelineDraw(mesh);
+            drawModelMesh(mesh, shadowPass, 0.5f);
         }
 
         for(auto &child : node.children)
@@ -126,6 +126,8 @@ private:
     void drawModelMesh(ModelMesh &mesh, bool shadowPass, float specular)
     {
         updateUniformMaterial(*mesh.material, specular);
+
+        updateShadowTextures(mesh.material->materialObj.get(), shadowPass);
 
         pipelineDraw(mesh);
     }
@@ -177,7 +179,7 @@ private:
         beginRenderPass(m_fboShadow, clearStates);
         setViewport(0, 0, SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT);
 
-        m_cameraDepth->lookat(glm::vec3(5.0f, 5.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        m_cameraDepth->lookat(glm::vec3(5.0f, 5.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         m_cameraCurrent = m_cameraDepth.get();
 
         drawScene(true);
@@ -430,7 +432,7 @@ private:
 
         uniformScene.u_ambientColor = glm::vec3(0.4f, 0.4f, 0.4f);
         uniformScene.u_cameraPosition = m_cameraCurrent->position();
-        uniformScene.u_pointLightPosition = glm::vec3(5.0f, 5.0f, 1.0f);
+        uniformScene.u_pointLightPosition = glm::vec3(5.0f, 5.0f, 3.0f);
         uniformScene.u_pointLightColor = glm::vec3(0.6f, 0.5f, 0.9f);
 
         m_uniformBlockScene->setData(&uniformScene, sizeof(UniformsScene));
@@ -450,7 +452,7 @@ private:
                                           0.0f, 0.5f, 0.0f, 0.0f,
                                           0.0f, 0.0f, 1.0f, 0.0f,
                                           0.5f, 0.5f, 0.0f, 1.0f};
-            uniformModel.u_shadowMVPMatrix = m_cameraDepth->getPerspectiveMatrix() * m_cameraDepth->getViewMatrix() * model;
+            uniformModel.u_shadowMVPMatrix = biasMatrix * m_cameraDepth->getPerspectiveMatrix() * m_cameraDepth->getViewMatrix() * model;
         }
 
         m_uniformBlockModel->setData(&uniformModel, sizeof(UniformsModel));

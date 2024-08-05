@@ -11,6 +11,13 @@ in vec3 v_worldTangent;
 
 out vec4 FragColor;
 
+layout (binding = 0, std140) uniform UniformsModel {
+    mat4 u_modelMatrix;
+    mat4 u_modelViewProjectionMatrix;
+    mat3 u_inverseTransposeModelMatrix;
+    mat4 u_shadowMVPMatrix;
+};
+
 layout(binding = 1, std140) uniform UniformsScene
 {
     vec3 u_ambientColor;
@@ -88,11 +95,7 @@ float ShadowCalculation(vec4 fragPos, vec3 normal)
     for (int x = -1; x <= 1; ++x) {
         for (int y = -1; y <= 1; ++y) {
             float pcfDepth = texture(u_shadowMap, projCoords.xy + vec2(x, y) * pixelOffset).r;
-            //if (u_reverseZ) {
-                //shadow += currentDepth + bias < pcfDepth ? 1.0 : 0.0;
-            //} else {
-                shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
-            //}
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }
     }
     shadow /= 9.0;

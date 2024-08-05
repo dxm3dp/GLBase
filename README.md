@@ -10,8 +10,7 @@ OpenGL 应用实践，包括各种缓存对象的使用，纹理映射，基础�
 
 |                               |                                |
 |-------------------------------|--------------------------------|
-| ![](screenshot/BlinnPhong.png)   | ![](screenshot/ShadowMapping.png)      |
-| ![](screenshot/BlinnPhong02.png)   |       |
+| ![](screenshot/BlinnPhong.png)   | ![](screenshot/DepthMap.png)      |
 
 ## 功能
 
