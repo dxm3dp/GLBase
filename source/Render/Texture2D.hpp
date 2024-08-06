@@ -31,7 +31,7 @@ public:
         glGenTextures(1, &m_texId);
     }
 
-    ~Texture2D()
+    ~Texture2D() override
     {
         glDeleteTextures(1, &m_texId);
     }
@@ -105,12 +105,13 @@ public:
             return;
 
         GLuint fbo;
-        GL_CHECK(glGenFramebuffers(1, &fbo));
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, fbo));
+        glGenFramebuffers(1, &fbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
         GLenum attachment = format == TextureFormat::FLOAT32 ? GL_DEPTH_ATTACHMENT : GL_COLOR_ATTACHMENT0;
         GLenum target = multiSample ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D;
-        //if (type == TextureType_CUBE) {
+        //if (type == TextureType_CUBE)
+        //{
         //target = OpenGL::cvtCubeFace(static_cast<CubeMapFace>(layer));
         //}
         glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, target, m_texId, level);
@@ -121,8 +122,8 @@ public:
         auto *pixels = new uint8_t[levelWidth * levelHeight * 4];
         glReadPixels(0, 0, levelWidth, levelHeight, m_glDesc.format, m_glDesc.type, pixels);
 
-        GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-        GL_CHECK(glDeleteFramebuffers(1, &fbo));
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDeleteFramebuffers(1, &fbo);
 
         // convert float to rgba
         if (format == TextureFormat::FLOAT32)

@@ -2,7 +2,7 @@
 
 ## 说明
 
-OpenGL 应用实践，包括各种缓存对象的使用，纹理映射，基础光照模型，阴影，摄像机控制，GLSL 等。
+OpenGL 应用实践，涉及模型加载，顶点缓存对象，纹理映射，材质封装，着色器封装，基础光照模型计算，阴影（Shadow Mapping），帧缓存，Uniform 缓存对象，摄像机控制等方面的应用。
 
 项目中使用的模型是 [tinyrender](https://github.com/ssloy/tinyrenderer) 、[SoftGLRender](https://github.com/keith2018/SoftGLRender) 中的开源模型。
 
@@ -14,15 +14,27 @@ OpenGL 应用实践，包括各种缓存对象的使用，纹理映射，基础�
 
 ## 功能
 
-- Vertex Array Object
-- Vertex Shader
-- Fragment Shader
-- Blinn-Phong Shading
-- Multiple Lights
-- Uniform Buffer Object
-- Shadow Mapping
-- Multi-Threaded Texture Loading
-- Camera Control
+- ModelLoader 类，封装了模型加载操作，包括加载模型、加载纹理、创建材质等。
+  - `class ModelLoader` : source/Model/ModelLoader.hpp
+- VertexArrayObject 类，封装了 VAO 的生成、绑定、传递数据等操作。
+  - `class VertexArrayObject` : source/Render/VertexArrayObject.hpp
+- Texture 类，封装了纹理属性，采样器属性以及与纹理相关的操作。
+  - `class Texture` : source/Render/Texture.hpp
+  - `class Texture2D` : source/Render/Texture2D.hpp
+- Material 类，封装了材质属性，如基础色、采用的着色器、对应的纹理数据，定义了与 Uniform Buffer Object 对应的数据结构，还提供了材质应用相关的工具方法，如获取对用类型采样器在着色器中的名称。
+  - `class Material` : source/Render/Material.hpp
+- Framebuffer 类，封装与 Framebuffer 相关的生成、绑定、初始化、删除等操作。
+  - `class Framebuffer` : source/Render/Framebuffer.hpp
+- ShaderProgram 类，封装了着色器的源代码加载、编译、创建着色器对象、关联着色器程序、链接着色器程序以及使用着色器程序等操作。
+  - `class ShaderProgram` : source/Render/ShaderProgram.hpp
+- ShaderResource 类，封装了需要传递给着色器的数据，包括 Uniform Block 和 Uniform Sampler 两部分。
+  - `class ShaderResource` : source/Render/ShaderResource.hpp
+- Uniform 类，封装了与 Uniform Block 和 Uniform Sampler 相关的查询索引位置、绑定等操作。
+  - `class UniformBase` : source/Render/UniformBase.hpp
+  - `class UniformBlock` : source/Render/UniformBlock.hpp
+  - `class UniformSampler` : source/Render/UniformSampler.hpp
+- Camera 类，封装了摄像机的位置、观察方向、视场角等属性，提供了获取视图、投影矩阵以及控制移动的方法。
+  - `class Camera` : source/Viewer/Camera.hpp
 
 ## 构建
 
@@ -64,7 +76,7 @@ cd GLBase/build
 
 ## 施工中
 
-- 封装 Shadow Pass
+- 透明物体渲染
 
 ## 参考
 

@@ -11,7 +11,7 @@ BEGIN_NAMESPACE(GLBase)
 
 enum class WrapMode
 {
-    REPEAT,
+    REPEAT = 0,
     MIRRORED_REPEAT,
     CLAMP_TO_EDGE,
     CLAMP_TO_BORDER,
@@ -19,7 +19,7 @@ enum class WrapMode
 
 enum class FilterMode
 {
-    NEAREST,
+    NEAREST = 0,
     LINEAR,
     NEAREST_MIPMAP_NEAREST,
     LINEAR_MIPMAP_NEAREST,
@@ -88,10 +88,12 @@ struct TextureOpenGLDesc
 class Texture : public TextureDesc
 {
 public:
+    virtual ~Texture() = default;
+
+public:
     static TextureOpenGLDesc getOpenGLDesc(TextureFormat format)
     {
         TextureOpenGLDesc ret{};
-
         switch(format)
         {
             case TextureFormat::RGBA8:
@@ -109,8 +111,7 @@ public:
         return ret;
     }
 
-public:
-    int getId() const
+    inline int getId() const
     {
         return (int)m_texId;
     }
