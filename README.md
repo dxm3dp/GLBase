@@ -2,7 +2,7 @@
 
 ## 说明
 
-OpenGL 应用实践，涉及模型加载，顶点缓存对象，纹理映射，材质封装，着色器封装，基础光照模型计算，阴影（Shadow Mapping），帧缓存，Uniform 缓存对象，摄像机控制等方面的应用。
+OpenGL 渲染实践，涉及模型加载，顶点缓存对象，纹理映射，材质封装，着色器封装，基础光照模型计算，阴影（Shadow Mapping），帧缓存，Uniform 缓存对象，摄像机控制等方面的应用。
 
 项目中使用的模型是 [tinyrender](https://github.com/ssloy/tinyrenderer) 、[SoftGLRender](https://github.com/keith2018/SoftGLRender) 中的开源模型。
 

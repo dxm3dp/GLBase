@@ -122,7 +122,11 @@ int main()
     GLBase::ModelLoader modelLoader;
     modelLoader.loadFloor(modelLoader.getScene().floor);
     modelLoader.loadCube(modelLoader.getScene().cube, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f)));
-    modelLoader.loadModel("../assets/DamagedHelmet/DamagedHelmet.gltf", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, 0.0f)));
+    //modelLoader.loadModel("../assets/DamagedHelmet/DamagedHelmet.gltf", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 2.5f, 0.0f)));
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(-1.0f, 1.5f, 1.2f));
+    model = glm::scale(model, glm::vec3(0.01f));
+    modelLoader.loadModel("../assets/GlassTable/scene.gltf", model);
 
     GLBase::Renderer renderer;
     renderer.create(g_camera, modelLoader.getScene());

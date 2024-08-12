@@ -71,6 +71,43 @@ public:
         drawMainPass();
     }
 
+    void setupShadowMapBuffer()
+    {
+        if (nullptr == m_fboShadow)
+        {
+            m_fboShadow = createFramebuffer(true);
+        }
+
+        if (nullptr == m_texDepthShadow)
+        {
+            TextureDesc texDesc{};
+            texDesc.width = SHADOW_MAP_WIDTH;
+            texDesc.height = SHADOW_MAP_HEIGHT;
+            texDesc.type = TextureType::Texture2D;
+            texDesc.format = TextureFormat::FLOAT32;
+            texDesc.usage = (int)TextureUsage::Sampler | (int)TextureUsage::AttachmentDepth;
+            texDesc.useMipmaps = false;
+            texDesc.multiSample = false;
+            m_texDepthShadow = createTexture(texDesc);
+
+            SamplerDesc samplerDesc{};
+            samplerDesc.filterMin = FilterMode::NEAREST;
+            samplerDesc.filterMag = FilterMode::NEAREST;
+            samplerDesc.wrapS = WrapMode::CLAMP_TO_BORDER;
+            samplerDesc.wrapT = WrapMode::CLAMP_TO_BORDER;
+            samplerDesc.borderColor = BorderColor::WHITE;
+            m_texDepthShadow->setSamplerDesc(samplerDesc);
+
+            m_texDepthShadow->initImageData();
+            m_fboShadow->setDepthAttachment(m_texDepthShadow);
+        }
+
+        if (!m_fboShadow->isValid())
+        {
+            LOGE("setupShadowMapBuffer failed");
+        }
+    }
+
     void setupScene()
     {
         pipelineSetup(m_scene.floor, m_scene.floor.material->shadingModel, {(int)GLBase::UniformBlockType::Scene, (int)GLBase::UniformBlockType::Model, (int)GLBase::UniformBlockType::Material});
@@ -535,43 +572,6 @@ private:
         }
 
         return shaderDefines;
-    }
-
-    void setupShadowMapBuffer()
-    {
-        if (nullptr == m_fboShadow)
-        {
-            m_fboShadow = createFramebuffer(true);
-        }
-
-        if (nullptr == m_texDepthShadow)
-        {
-            TextureDesc texDesc{};
-            texDesc.width = SHADOW_MAP_WIDTH;
-            texDesc.height = SHADOW_MAP_HEIGHT;
-            texDesc.type = TextureType::Texture2D;
-            texDesc.format = TextureFormat::FLOAT32;
-            texDesc.usage = (int)TextureUsage::Sampler | (int)TextureUsage::AttachmentDepth;
-            texDesc.useMipmaps = false;
-            texDesc.multiSample = false;
-            m_texDepthShadow = createTexture(texDesc);
-
-            SamplerDesc sampler{};
-            sampler.filterMin = FilterMode::NEAREST;
-            sampler.filterMag = FilterMode::NEAREST;
-            sampler.wrapS = WrapMode::CLAMP_TO_BORDER;
-            sampler.wrapT = WrapMode::CLAMP_TO_BORDER;
-            sampler.borderColor = BorderColor::WHITE;
-            m_texDepthShadow->setSamplerDesc(sampler);
-
-            m_texDepthShadow->initImageData();
-            m_fboShadow->setDepthAttachment(m_texDepthShadow);
-        }
-
-        if (!m_fboShadow->isValid())
-        {
-            LOGE("setupShadowMapBuffer failed");
-        }
     }
 
     void updateShadowTextures(MaterialObject *materialObj, bool shadowPass)
