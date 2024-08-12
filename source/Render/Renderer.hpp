@@ -8,6 +8,7 @@
 #include "Model/ModelBase.hpp"
 #include "Render/DemoScene.hpp"
 #include "Render/Framebuffer.hpp"
+#include "Render/PipelineStates.hpp"
 #include "Render/RenderStates.hpp"
 #include "Render/ShaderProgram.hpp"
 #include "Render/Texture2D.hpp"
@@ -17,14 +18,19 @@
 
 BEGIN_NAMESPACE(GLBase)
 
-#define SHADOW_MAP_WIDTH 1024
-#define SHADOW_MAP_HEIGHT 1024
-
 #define CREATE_UNIFORM_BLOCK(name) createUniformBlock(#name, sizeof(name))
 
 #define CASE_CREATE_SHADER_GL(shading, source) case shading: \
   return program.compileAndLinkFile(SHADER_GLSL_DIR + #source + ".vert", \
                                        SHADER_GLSL_DIR + #source + ".frag")
+
+#define GL_STATE_SET(val, gl_state) if (val) glEnable(gl_state); else glDisable(gl_state);
+
+const int SCREEN_WIDTH = 1024;
+const int SCREEN_HEIGHT = 1024;
+
+const int SHADOW_MAP_WIDTH = 1024;
+const int SHADOW_MAP_HEIGHT = 1024;
 
 class Renderer
 {
@@ -77,7 +83,6 @@ public:
     void drawScene(bool shadowPass)
     {
         updateUniformScene();
-        updateUniformModel(glm::mat4(1.0f), m_cameraCurrent->getViewMatrix());
 
         if (!shadowPass)
         {
@@ -89,7 +94,9 @@ public:
         drawModelMesh(m_scene.cube, shadowPass, 0.5f);
 
         ModelNode &rootNode = m_scene.model->rootNode;
-        drawModelNode(rootNode, shadowPass);
+        drawModelNode(rootNode, shadowPass, AlphaMode::Opaque);
+
+        drawModelNode(rootNode, shadowPass, AlphaMode::Blend);
     }
 
 private:
@@ -106,7 +113,7 @@ private:
         }
     }
 
-    void drawModelNode(ModelNode &node, bool shadowPass)
+    void drawModelNode(ModelNode &node, bool shadowPass, AlphaMode mode)
     {
         glm::mat4 modelMatrix = node.transform;
 
@@ -114,12 +121,15 @@ private:
 
         for(auto &mesh : node.meshes)
         {
+            if(mesh.material->alphaMode != mode)
+                continue;
+
             drawModelMesh(mesh, shadowPass, 0.5f);
         }
 
         for(auto &child : node.children)
         {
-            drawModelNode(child, shadowPass);
+            drawModelNode(child, shadowPass, mode);
         }
     }
 
@@ -136,6 +146,14 @@ private:
     {
         setupVertexArray(model);
 
+        if (model.material->materialObj != nullptr)
+        {
+            if (model.material->materialObj->shadingModel != shadingModel)
+            {
+                model.material->materialObj = nullptr;
+            }
+        }
+
         setupMaterial(model, shadingModel, uniformBlocks);
     }
 
@@ -150,6 +168,9 @@ private:
         // set shader resources
         setShaderResources(model.material->materialObj->shaderResources);
 
+        // set pipeline states
+        setPipelineStates(model.material->materialObj->pipelineStates);
+
         // draw
         glDrawElements(GL_TRIANGLES, (GLsizei) model.vao->getIndicesCount(), GL_UNSIGNED_INT, nullptr);
     }
@@ -163,7 +184,7 @@ private:
         clearStates.clearDepth = 1.0f;
 
         beginRenderPass(clearStates);
-        setViewport(0, 0, 1024, 1024);
+        setViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
         drawScene(false);
 
@@ -229,7 +250,11 @@ private:
 
     void endRenderPass()
     {
-        // do nothing
+        glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(true);
+        glDisable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     void setViewport(int x, int y, int width, int height)
@@ -287,6 +312,8 @@ private:
                 }
             }
         }
+
+        setupPipelineStates(model);
     }
 
     void setupTextures(Material &material)
@@ -372,29 +399,6 @@ private:
         }
     }
 
-    std::shared_ptr<Texture> createTexture(const TextureDesc &desc)
-    {
-        switch(desc.type)
-        {
-            case TextureType::Texture2D:
-                return std::make_shared<Texture2D>(desc);
-            default:
-                break;
-        }
-
-        return nullptr;
-    }
-
-    std::shared_ptr<ShaderProgram> createShaderProgram()
-    {
-        return std::make_shared<ShaderProgram>();
-    }
-
-    std::shared_ptr<UniformSampler> createUniformSampler(const std::string &name, const TextureDesc &desc)
-    {
-        return std::make_shared<UniformSampler>(name, desc.type, desc.format);
-    }
-
     bool loadShaders(ShaderProgram &program, ShadingModel shadingModel)
     {
         switch (shadingModel)
@@ -419,11 +423,6 @@ private:
         }
 
         return seed;
-    }
-
-    std::shared_ptr<UniformBlock> createUniformBlock(const std::string &name, int size)
-    {
-        return std::make_shared<UniformBlock>(name, size);
     }
 
     void updateUniformScene()
@@ -496,6 +495,33 @@ private:
         }
     }
 
+    void setPipelineStates(std::shared_ptr<PipelineStates> &pipelineStates)
+    {
+        if (nullptr == pipelineStates)
+            return;
+
+        auto &renderStates = pipelineStates->renderStates;
+
+        // blend
+        GL_STATE_SET(renderStates.blend, GL_BLEND);
+        glBlendEquationSeparate(
+            cvtBlendFunction(renderStates.blendParams.blendFuncRgb),
+            cvtBlendFunction(renderStates.blendParams.blendFuncAlpha));
+        glBlendFuncSeparate(
+            cvtBlendFactor(renderStates.blendParams.blendSrcRgb),
+            cvtBlendFactor(renderStates.blendParams.blendDstRgb),
+            cvtBlendFactor(renderStates.blendParams.blendSrcAlpha),
+            cvtBlendFactor(renderStates.blendParams.blendDstAlpha));
+
+        // depth
+        GL_STATE_SET(renderStates.depthTest, GL_DEPTH_TEST);
+        glDepthMask(renderStates.depthMask);
+        glDepthFunc(cvtDepthFunction(renderStates.depthFunc));
+
+        GL_STATE_SET(renderStates.cullFace, GL_CULL_FACE)
+        glPolygonMode(GL_FRONT_AND_BACK, cvtPolygonMode(renderStates.polygonMode));
+    }
+
     std::set<std::string> generateShaderDefines(Material &material)
     {
         std::set<std::string> shaderDefines;
@@ -548,11 +574,6 @@ private:
         }
     }
 
-    std::shared_ptr<Framebuffer> createFramebuffer(bool offscreen)
-    {
-        return std::make_shared<Framebuffer>(offscreen);
-    }
-
     void updateShadowTextures(MaterialObject *materialObj, bool shadowPass)
     {
         if (nullptr == materialObj->shaderResources)
@@ -567,6 +588,89 @@ private:
         {
             samplers[(int)MaterialTexType::SHADOWMAP]->setTexture(m_texDepthShadow);
         }
+    }
+
+    void setupPipelineStates(ModelBase &model)
+    {
+        auto &material = *model.material;
+        RenderStates rs;
+        rs.blend = material.alphaMode == AlphaMode::Blend;
+        rs.blendParams.setBlendFactor(BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+
+        rs.depthTest = true;
+        rs.depthMask = !rs.blend;
+        rs.depthFunc = DepthFunction::LESS;
+
+        rs.cullFace = !material.doubleSided;
+        rs.primitiveType = PrimitiveType::TRIANGLE;
+        rs.polygonMode = PolygonMode::FILL;
+
+        size_t cacheKey = getPipelineCacheKey(material, rs);
+        auto it = m_pipelineCache.find(cacheKey);
+        if (it != m_pipelineCache.end())
+        {
+            material.materialObj->pipelineStates = it->second;
+        }
+        else
+        {
+            auto pipelineStates = createPipelineStates(rs);
+            material.materialObj->pipelineStates = pipelineStates;
+            m_pipelineCache[cacheKey] = pipelineStates;
+        }
+    }
+
+    size_t getPipelineCacheKey(Material &material, const RenderStates &rs)
+    {
+        size_t seed = 0;
+
+        HashUtils::hashCombine(seed, (int) material.materialObj->shadingModel);
+
+        HashUtils::hashCombine(seed, rs.blend);
+        HashUtils::hashCombine(seed, (int) rs.blendParams.blendFuncRgb);
+        HashUtils::hashCombine(seed, (int) rs.blendParams.blendSrcRgb);
+        HashUtils::hashCombine(seed, (int) rs.blendParams.blendDstRgb);
+        HashUtils::hashCombine(seed, (int) rs.blendParams.blendFuncAlpha);
+        HashUtils::hashCombine(seed, (int) rs.blendParams.blendSrcAlpha);
+        HashUtils::hashCombine(seed, (int) rs.blendParams.blendDstAlpha);
+
+        HashUtils::hashCombine(seed, rs.depthTest);
+        HashUtils::hashCombine(seed, rs.depthMask);
+        HashUtils::hashCombine(seed, (int) rs.depthFunc);
+
+        return seed;
+    }
+
+    std::shared_ptr<Texture> createTexture(const TextureDesc &desc)
+    {
+        switch(desc.type)
+        {
+            case TextureType::Texture2D:
+                return std::make_shared<Texture2D>(desc);
+            default:
+                break;
+        }
+
+        return nullptr;
+    }
+
+    std::shared_ptr<ShaderProgram> createShaderProgram()
+    {
+        return std::make_shared<ShaderProgram>();
+    }
+
+    std::shared_ptr<UniformSampler> createUniformSampler(const std::string &name, const TextureDesc &desc)
+    {
+        return std::make_shared<UniformSampler>(name, desc.type, desc.format);
+    }
+
+    std::shared_ptr<UniformBlock> createUniformBlock(const std::string &name, int size)
+    {
+        return std::make_shared<UniformBlock>(name, size);
+    }
+
+    std::shared_ptr<Framebuffer> createFramebuffer(bool offscreen)
+    {
+        return std::make_shared<Framebuffer>(offscreen);
     }
 
     std::shared_ptr<Texture> createTexture2DDefault(int width, int height, TextureFormat format, uint32_t usage, bool mipmaps)
@@ -593,6 +697,11 @@ private:
         return texture2d;
     }
 
+    std::shared_ptr<PipelineStates> createPipelineStates(const RenderStates &renderStates)
+    {
+        return std::make_shared<PipelineStates>(renderStates);
+    }
+
 private:
     DemoScene m_scene;
 
@@ -604,6 +713,7 @@ private:
 
     // caches
     std::unordered_map<size_t, std::shared_ptr<ShaderProgram>> m_programCache;
+    std::unordered_map<size_t, std::shared_ptr<PipelineStates>> m_pipelineCache;
 
     // uniform blocks
     std::shared_ptr<UniformBlock> m_uniformBlockScene;

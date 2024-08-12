@@ -15,9 +15,6 @@
 #include "Render/Renderer.hpp"
 #include "Viewer/Camera.hpp"
 
-const int SCREEN_WIDTH = 1024;
-const int SCREEN_HEIGHT = 1024;
-
 GLBase::AsModel *g_asModel = nullptr;
 
 std::shared_ptr<GLBase::Camera> g_camera = nullptr;
@@ -100,7 +97,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow *window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "GLBase", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(GLBase::SCREEN_WIDTH, GLBase::SCREEN_HEIGHT, "GLBase", nullptr, nullptr);
     if (nullptr == window)
     {
         LOGE("Failed to create GLFW window.");
@@ -120,7 +117,7 @@ int main()
     }
 
     g_camera = std::make_shared<GLBase::Camera>(g_cameraPos, g_cameraPos + g_cameraFront, g_cameraUp);
-    g_camera->setPerspective(glm::radians(GLBase::CAMERA_FOV), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, GLBase::CAMERA_NEAR, GLBase::CAMERA_FAR);
+    g_camera->setPerspective(glm::radians(GLBase::CAMERA_FOV), (float)GLBase::SCREEN_WIDTH / (float)GLBase::SCREEN_HEIGHT, GLBase::CAMERA_NEAR, GLBase::CAMERA_FAR);
 
     GLBase::ModelLoader modelLoader;
     modelLoader.loadFloor(modelLoader.getScene().floor);

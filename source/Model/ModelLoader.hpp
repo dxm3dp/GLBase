@@ -3,6 +3,7 @@
 
 #include "Common/cpplang.hpp"
 
+#include <assimp/GltfMaterial.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -85,6 +86,7 @@ public:
         mesh.material = std::make_shared<Material>();// create a new material
         mesh.material->shadingModel = ShadingModel::BlinnPhong;
         mesh.material->baseColor = glm::vec4(1.0f);
+        mesh.material->alphaMode = AlphaMode::Opaque;
 
         std::string texturePath = "../assets/Textures/wood.png";
         auto buffer = loadTextureFile(texturePath);
@@ -308,10 +310,23 @@ public:
 			const aiMaterial* material = ai_scene->mMaterials[ai_mesh->mMaterialIndex];
 
 			// alpha mode
-            // to do
+            outMesh.material->alphaMode = AlphaMode::Opaque;
+            aiString alphaMode;
+            if (material->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode) == aiReturn_SUCCESS)
+            {
+                if (aiString("BLEND") == alphaMode)
+                {
+                    outMesh.material->alphaMode = AlphaMode::Blend;
+                }
+            }
 
 			// double side
-            // to do
+            outMesh.material->doubleSided = false;
+			bool doubleSide;
+			if (material->Get(AI_MATKEY_TWOSIDED, doubleSide) == aiReturn_SUCCESS)
+            {
+				outMesh.material->doubleSided = doubleSide;
+			}
 
 			// shading mode
 			outMesh.material->shadingModel = ShadingModel::BlinnPhong; // default

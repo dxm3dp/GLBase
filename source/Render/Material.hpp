@@ -6,6 +6,7 @@
 #include "Common/GLMInc.hpp"
 
 #include "Common/Buffer.hpp"
+#include "Render/PipelineStates.hpp"
 #include "Render/ShaderProgram.hpp"
 #include "Render/ShaderResources.hpp"
 #include "Render/Texture.hpp"
@@ -23,6 +24,12 @@ struct TextureData
     WrapMode wrapModeU = WrapMode::REPEAT;
     WrapMode wrapModeV = WrapMode::REPEAT;
     WrapMode wrapModeW = WrapMode::REPEAT;
+};
+
+enum class AlphaMode
+{
+    Opaque = 0,
+    Blend,
 };
 
 enum class ShadingModel
@@ -89,6 +96,7 @@ class MaterialObject
 {
 public:
     ShadingModel shadingModel = ShadingModel::Unknown;
+    std::shared_ptr<PipelineStates> pipelineStates;
     std::shared_ptr<ShaderProgram> shaderProgram;
     std::shared_ptr<ShaderResources> shaderResources;
 };
@@ -184,6 +192,8 @@ public:
 public:
     ShadingModel shadingModel = ShadingModel::Unknown;
     glm::vec4 baseColor = glm::vec4(1.0f);
+    AlphaMode alphaMode = AlphaMode::Opaque;
+    bool doubleSided = false;
 
     std::unordered_map<int, TextureData> textureData;// key - TextureType(Albedo, Normal, ...)
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
