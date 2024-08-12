@@ -40,7 +40,7 @@ public:
 
     bool isValid()
     {
-        if (m_fbo == 0)
+        if (0 == m_fbo)
             return false;
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);

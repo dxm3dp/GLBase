@@ -43,11 +43,10 @@ public:
             return;
 
         glBindTexture(m_target, m_texId);
-        glTexParameteri(m_target, GL_TEXTURE_WRAP_S, cvtWrap(sampler.wrapS));
-        glTexParameteri(m_target, GL_TEXTURE_WRAP_T, cvtWrap(sampler.wrapT));
         glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, cvtFilter(sampler.filterMin));
         glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, cvtFilter(sampler.filterMag));
-
+        glTexParameteri(m_target, GL_TEXTURE_WRAP_S, cvtWrap(sampler.wrapS));
+        glTexParameteri(m_target, GL_TEXTURE_WRAP_T, cvtWrap(sampler.wrapT));
         glm::vec4 borderColor = cvtBorderColor(sampler.borderColor);
         glTexParameterfv(m_target, GL_TEXTURE_BORDER_COLOR, &borderColor[0]);
     }

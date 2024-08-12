@@ -11,6 +11,7 @@ OpenGL 应用实践，涉及模型加载，顶点缓存对象，纹理映射，�
 |                               |                                |
 |-------------------------------|--------------------------------|
 | ![](screenshot/BlinnPhong.png)   | ![](screenshot/DepthMap.png)      |
+| ![](screenshot/Transparency.png)   | ![]()      |
 
 ## 功能
 
@@ -35,6 +36,10 @@ OpenGL 应用实践，涉及模型加载，顶点缓存对象，纹理映射，�
   - `class UniformSampler` : source/Render/UniformSampler.hpp
 - Camera 类，封装了摄像机的位置、观察方向、视场角等属性，提供了获取视图、投影矩阵以及控制移动的方法。
   - `class Camera` : source/Viewer/Camera.hpp
+
+## Render Framework Diagram（梳理中）
+
+![](screenshot/RenderMap.png)
 
 ## 构建
 
@@ -76,7 +81,8 @@ cd GLBase/build
 
 ## 施工中
 
-- 透明物体渲染
+- 梳理 Render Framework Diagram
+- 半透明物体阴影渲染
 
 ## 参考
 
