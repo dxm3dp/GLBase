@@ -35,3 +35,34 @@ float bias = max(depthBiasCoeff * (1.0 - dot(normal, worldLightDir)), depthBiasM
 <div align="center">
   <img src="./Images/0104.png" width="400"/>
 </div>
+
+## 阴影边缘抗锯齿
+
+现在观察我们产生阴影的边缘部分，会发现十分明显的锯齿现象。产生这种明显锯齿现象的原因，依旧是因为深度图的精度限制所致。阴影边界区域的片元在对深度图进行采样时，由于多个片元会采样到同一个深度图的纹素，也就得到相同的深度值，过度生硬，就会产生锯齿边。
+
+<div align="center">
+  <img src="./Images/0105.png" width="400"/>
+</div>
+
+解决这个问题的技术被称为 PCF，它是 percentage-closer filtering 的缩写，它是多个不同过滤方式的组合，用于降低阴影边缘的锯齿现象。一个简单的 PCF 实现是从纹素的周围对深度图进行采样，然后把采样结果求平均，得到最终结果。
+
+```cpp
+float shadow = 0.0;
+vec2 pixelOffset = 1.0 / textureSize(u_shadowMap, 0);
+for (int x = -1; x <= 1; ++x)
+{
+    for (int y = -1; y <= 1; ++y)
+    {
+        float pcfDepth = texture(u_shadowMap, projCoords.xy + vec2(x, y) * pixelOffset).r;
+        shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+    }
+}
+shadow /= 9.0;
+return shadow;
+```
+
+通过增加采样次数，并混合所有采样结果，我们可以得到相对更好的阴影渲染效果，如下图。
+
+<div align="center">
+  <img src="./Images/0106.png" width="400"/>
+</div>

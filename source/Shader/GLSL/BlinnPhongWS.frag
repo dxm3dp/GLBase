@@ -75,25 +75,26 @@ float ShadowCalculation(vec4 fragPos, vec3 normal)
     vec3 projCoords = fragPos.xyz / fragPos.w;
     float currentDepth = projCoords.z;
 
-    #if defined(OpenGL)// [-1, 1] -> [0, 1]
+#if defined(OpenGL)// [-1, 1] -> [0, 1]
     currentDepth = currentDepth * 0.5 + 0.5;
-    #endif
+#endif
 
-    if (currentDepth < 0.0 || currentDepth > 1.0) {
+    if (currentDepth < 0.0 || currentDepth > 1.0)
+    {
         return 0.0;
     }
 
     float bias = max(depthBiasCoeff * (1.0 - dot(normal, normalize(v_worldLightDir))), depthBiasMin);
-    #if defined(OpenGL)
+#if defined(OpenGL)
     bias = bias * 0.5;
-    #endif
+#endif
 
     float shadow = 0.0;
-
-    // PCF
     vec2 pixelOffset = 1.0 / textureSize(u_shadowMap, 0);
-    for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
             float pcfDepth = texture(u_shadowMap, projCoords.xy + vec2(x, y) * pixelOffset).r;
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }
