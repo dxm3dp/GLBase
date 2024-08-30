@@ -39,7 +39,7 @@ OpenGL 渲染实践，涉及模型加载，顶点缓存对象，纹理映射，�
 
 ## Render Framework Diagram（梳理中）
 
-![](screenshot/RenderMap.png)
+[RenderMap](https://github.com/dxm3dp/GLBase/blob/main/screenshot/RenderMap.png)
 
 ## 构建
 
@@ -81,8 +81,9 @@ cd GLBase/build
 
 ## 施工中
 
+- Skybox 绘制
+- 半透明物体阴影绘制
 - 梳理 Render Framework Diagram
-- 半透明物体阴影渲染
 
 ## 参考
 

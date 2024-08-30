@@ -21,6 +21,8 @@ struct Vertex
 
 struct ModelBase : VertexArray
 {
+    PrimitiveType primitiveType;
+    size_t primitiveCount = 0;
     std::vector<Vertex> vertices;
     std::vector<int32_t> indices;
     std::shared_ptr<VertexArrayObject> vao = nullptr;

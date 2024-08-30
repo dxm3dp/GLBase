@@ -13,6 +13,7 @@ struct DemoScene
     std::shared_ptr<Model> model = nullptr;
     ModelMesh floor;
     ModelMesh cube;
+    ModelMesh skybox;
 };
 
 END_NAMESPACE(GLBase)

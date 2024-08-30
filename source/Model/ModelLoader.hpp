@@ -35,6 +35,9 @@ public:
         mesh.indices.push_back(3);
         mesh.indices.push_back(2);
 
+        mesh.primitiveType = PrimitiveType::TRIANGLE;
+        mesh.primitiveCount = 2;
+
         mesh.transform = transform;
 
         mesh.material = std::make_shared<Material>(); // create a new material
@@ -62,7 +65,8 @@ public:
     void loadCube(ModelMesh &mesh, glm::mat4 transform = glm::mat4(1.0f))
     {
         const float *cubeVertices = Cube::getVertices();
-
+        mesh.primitiveType = PrimitiveType::TRIANGLE;
+        mesh.primitiveCount = 12;
         for(int i = 0; i < 12; i++)
         {
             for(int j = 0; j < 3; j++)
@@ -104,6 +108,18 @@ public:
         }
 
         mesh.InitVertexArray();
+    }
+
+    void loadSkybox(const std::string &filePath)
+    {
+        if(filePath.empty())
+            return;
+
+        if (m_scene.skybox.primitiveCount <= 0) {
+			loadCube(m_scene.skybox);
+		}
+
+        // to do
     }
 
     bool loadModel(const std::string &path, glm::mat4 transform = glm::mat4(1.0f))
@@ -225,8 +241,6 @@ public:
                 ModelMesh mesh;
                 if (processMesh(meshPtr, ai_scene, mesh))
                 {
-                    // to do other
-
                     outNode.meshes.push_back(std::move(mesh));
                 }
             }
