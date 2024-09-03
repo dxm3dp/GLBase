@@ -1,0 +1,12 @@
+{
+    "model": {
+        "Diablo": {
+            "path": "diablo3/diablo3_pose.obj",
+            "default": false
+        },
+        "DamagedHelmet": {
+			"path": "DamagedHelmet/DamagedHelmet.gltf",
+			"default": true
+		}
+    }
+}
